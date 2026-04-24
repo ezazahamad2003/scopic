@@ -1,0 +1,12 @@
+﻿node_modules/
+dist/
+dist-renderer/
+out/
+.env
+.env.local
+.DS_Store
+*.exe
+*.dmg
+*.AppImage
+*.snap
+thumbs.db

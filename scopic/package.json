@@ -1,0 +1,46 @@
+{
+  "name": "scopic",
+  "version": "1.0.0",
+  "description": "Scopic - Local-first legal AI assistant powered by Ollama",
+  "main": "src/main/index.js",
+  "author": "Scopic",
+  "license": "MIT",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:renderer\" \"npm run dev:electron\"",
+    "dev:renderer": "vite --port 5173 --strictPort",
+    "dev:electron": "wait-on http://localhost:5173 && electron .",
+    "build": "vite build && electron-builder",
+    "build:win": "vite build && electron-builder --win",
+    "start": "electron .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "electron-store": "^8.2.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^9.1.2",
+    "electron": "^41.3.0",
+    "electron-builder": "^26.8.1",
+    "postcss": "^8.5.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwindcss": "^3.4.17",
+    "vite": "^6.0.11",
+    "wait-on": "^8.0.3"
+  },
+  "build": {
+    "appId": "com.scopic.legal",
+    "productName": "Scopic",
+    "directories": { "output": "dist" },
+    "files": ["src/main/**/*", "dist-renderer/**/*", "package.json"],
+    "win": { "target": "nsis", "icon": "build/icon.ico" },
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "shortcutName": "Scopic"
+    }
+  }
+}

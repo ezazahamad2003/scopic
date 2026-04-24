@@ -1,0 +1,116 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background-color: #0f1117;
+  color: #e8e8e8;
+  font-family: "DM Sans", sans-serif;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #2a3347;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3a4560;
+}
+
+/* Titlebar drag region */
+.titlebar-drag {
+  -webkit-app-region: drag;
+}
+.titlebar-no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/* Markdown styles inside chat */
+.prose-legal h1,
+.prose-legal h2,
+.prose-legal h3 {
+  color: #c9a55c;
+  font-family: "DM Serif Display", serif;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+.prose-legal h1 { font-size: 1.25rem; }
+.prose-legal h2 { font-size: 1.1rem; }
+.prose-legal h3 { font-size: 1rem; }
+.prose-legal p { margin-bottom: 0.75rem; line-height: 1.7; }
+.prose-legal ul,
+.prose-legal ol {
+  padding-left: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+.prose-legal li { margin-bottom: 0.25rem; line-height: 1.6; }
+.prose-legal code {
+  background: #1e2535;
+  border: 1px solid #2a3347;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  font-size: 0.85em;
+  font-family: "Courier New", monospace;
+}
+.prose-legal pre {
+  background: #1e2535;
+  border: 1px solid #2a3347;
+  padding: 1rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin-bottom: 0.75rem;
+}
+.prose-legal pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+.prose-legal strong { color: #d4b675; }
+.prose-legal blockquote {
+  border-left: 3px solid #c9a55c;
+  padding-left: 1rem;
+  color: #9aa0b4;
+  margin-bottom: 0.75rem;
+}
+.prose-legal a {
+  color: #c9a55c;
+  text-decoration: underline;
+}
+.prose-legal hr {
+  border-color: #2a3347;
+  margin: 1rem 0;
+}
+
+/* Streaming cursor blink */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.streaming-cursor::after {
+  content: "▋";
+  animation: blink 0.7s infinite;
+  color: #c9a55c;
+  font-size: 0.9em;
+}
+
+/* Gradient fade for sidebar */
+.sidebar-gradient {
+  background: linear-gradient(180deg, #161b27 0%, #0f1117 100%);
+}
