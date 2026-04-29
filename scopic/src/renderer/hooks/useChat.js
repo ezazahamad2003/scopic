@@ -6,9 +6,20 @@ import {
   generateId,
   formatConversationTitle,
 } from "../utils/storage.js";
-import { LEGAL_SYSTEM_PROMPT, DEFAULT_SETTINGS } from "../utils/constants.js";
+import {
+  LEGAL_SYSTEM_PROMPT,
+  CONTRACT_REVIEW_SYSTEM_PROMPT,
+  AGENTIC_DEBATE_SYSTEM_PROMPT,
+  DEFAULT_SETTINGS,
+} from "../utils/constants.js";
 
-export function useChat(activeConversationId, setActiveConversationId, settings) {
+function getSystemPrompt(mode) {
+  if (mode === "document_review") return CONTRACT_REVIEW_SYSTEM_PROMPT;
+  if (mode === "agentic_debate") return AGENTIC_DEBATE_SYSTEM_PROMPT;
+  return LEGAL_SYSTEM_PROMPT;
+}
+
+export function useChat(activeConversationId, setActiveConversationId, settings, activeMode) {
   const [conversations, setConversations] = useState([]);
   const [currentMessages, setCurrentMessages] = useState([]);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -67,8 +78,10 @@ export function useChat(activeConversationId, setActiveConversationId, settings)
       const model = settings?.model || DEFAULT_SETTINGS.model;
       const temperature = settings?.temperature ?? DEFAULT_SETTINGS.temperature;
 
+      const systemPrompt = getSystemPrompt(activeMode);
+
       const messagesToSend = [
-        { role: "system", content: LEGAL_SYSTEM_PROMPT },
+        { role: "system", content: systemPrompt },
         ...newMessages.slice(0, -1),
       ];
 
@@ -94,7 +107,11 @@ export function useChat(activeConversationId, setActiveConversationId, settings)
             const updated = [...prev];
             const last = updated.length - 1;
             if (updated[last]?.role === "assistant") {
-              updated[last] = { ...updated[last], content: `Error: ${errText}`, isError: true };
+              updated[last] = {
+                ...updated[last],
+                content: `Error: ${errText}`,
+                isError: true,
+              };
             }
             return updated;
           });
@@ -138,8 +155,13 @@ export function useChat(activeConversationId, setActiveConversationId, settings)
         // Save completed conversation
         setCurrentMessages((prev) => {
           const title = formatConversationTitle(prev);
-          saveConversation({ id: convId, title, messages: prev, updatedAt: Date.now() })
-            .then(() => loadConversations());
+          saveConversation({
+            id: convId,
+            title,
+            messages: prev,
+            updatedAt: Date.now(),
+            mode: activeMode,
+          }).then(() => loadConversations());
           return prev;
         });
       } catch (err) {
@@ -148,7 +170,11 @@ export function useChat(activeConversationId, setActiveConversationId, settings)
           const updated = [...prev];
           const last = updated.length - 1;
           if (updated[last]?.role === "assistant") {
-            updated[last] = { ...updated[last], content: `Error: ${err.message}`, isError: true };
+            updated[last] = {
+              ...updated[last],
+              content: `Error: ${err.message}`,
+              isError: true,
+            };
           }
           return updated;
         });
@@ -157,7 +183,7 @@ export function useChat(activeConversationId, setActiveConversationId, settings)
         abortRef.current = null;
       }
     },
-    [activeConversationId, currentMessages, isStreaming, settings, setActiveConversationId]
+    [activeConversationId, currentMessages, isStreaming, settings, setActiveConversationId, activeMode]
   );
 
   const deleteConversation = useCallback(async (id) => {

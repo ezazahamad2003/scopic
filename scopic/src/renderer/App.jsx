@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Sidebar from "./components/Sidebar.jsx";
 import ChatArea from "./components/ChatArea.jsx";
 import SettingsModal from "./components/SettingsModal.jsx";
@@ -8,6 +8,7 @@ import { useChat } from "./hooks/useChat.js";
 export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [activeConversationId, setActiveConversationId] = useState(null);
+  const [activeMode, setActiveMode] = useState("general");
   const { connected, models, settings, saveSettings, recheckConnection } = useOllama();
   const {
     conversations,
@@ -17,7 +18,7 @@ export default function App() {
     createNewConversation,
     loadConversation,
     deleteConversation,
-  } = useChat(activeConversationId, setActiveConversationId, settings);
+  } = useChat(activeConversationId, setActiveConversationId, settings, activeMode);
 
   const handleSelectConversation = (id) => {
     setActiveConversationId(id);
@@ -36,29 +37,41 @@ export default function App() {
     }
   };
 
+  const handleSetMode = (mode) => {
+    setActiveMode(mode);
+    // Start a new conversation when switching to a mode
+    if (mode !== "general") {
+      const id = createNewConversation();
+      setActiveConversationId(id);
+    }
+  };
+
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#0F1117] select-none">
+    <div
+      className="flex h-screen w-screen overflow-hidden select-none"
+      style={{ background: "#0D1117" }}
+    >
       {/* Custom Titlebar */}
       <div
         className="titlebar-drag fixed top-0 left-0 right-0 h-8 z-50 flex items-center justify-end"
-        style={{ background: "#0F1117" }}
+        style={{ background: "#0D1117" }}
       >
         <div className="titlebar-no-drag flex items-center h-full">
           <button
             onClick={() => window.windowControls?.minimize()}
-            className="w-12 h-8 flex items-center justify-center text-gray-400 hover:bg-[#1E2535] hover:text-white transition-colors text-sm"
+            className="w-12 h-8 flex items-center justify-center text-gray-500 hover:bg-[#1E2535] hover:text-white transition-colors text-sm"
           >
             &#8722;
           </button>
           <button
             onClick={() => window.windowControls?.maximize()}
-            className="w-12 h-8 flex items-center justify-center text-gray-400 hover:bg-[#1E2535] hover:text-white transition-colors text-xs"
+            className="w-12 h-8 flex items-center justify-center text-gray-500 hover:bg-[#1E2535] hover:text-white transition-colors text-xs"
           >
             &#9633;
           </button>
           <button
             onClick={() => window.windowControls?.close()}
-            className="w-12 h-8 flex items-center justify-center text-gray-400 hover:bg-red-600 hover:text-white transition-colors text-sm"
+            className="w-12 h-8 flex items-center justify-center text-gray-500 hover:bg-red-600 hover:text-white transition-colors text-sm"
           >
             &#10005;
           </button>
@@ -72,10 +85,12 @@ export default function App() {
           activeId={activeConversationId}
           connected={connected}
           settings={settings}
+          activeMode={activeMode}
           onSelectConversation={handleSelectConversation}
           onNewConversation={handleNewConversation}
           onDeleteConversation={handleDeleteConversation}
           onOpenSettings={() => setSettingsOpen(true)}
+          onSetMode={handleSetMode}
         />
         <ChatArea
           messages={currentMessages}
@@ -83,6 +98,8 @@ export default function App() {
           connected={connected}
           onSend={sendMessage}
           conversationId={activeConversationId}
+          activeMode={activeMode}
+          onSetMode={handleSetMode}
         />
       </div>
 
@@ -90,7 +107,11 @@ export default function App() {
         <SettingsModal
           settings={settings}
           models={models}
-          onSave={(s) => { saveSettings(s); setSettingsOpen(false); recheckConnection(); }}
+          onSave={(s) => {
+            saveSettings(s);
+            setSettingsOpen(false);
+            recheckConnection();
+          }}
           onClose={() => setSettingsOpen(false)}
         />
       )}
