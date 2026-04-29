@@ -1,10 +1,15 @@
-name: Build Windows Installer
+name: Build & Release Windows Installer
 
 on:
   push:
     branches: [main]
+    tags:
+      - "v*"
   release:
     types: [published]
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -36,8 +41,37 @@ jobs:
           path: scopic/dist/*.exe
           retention-days: 30
 
-      - name: Attach to GitHub Release
-        if: github.event_name == 'release'
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
+          name: "Scopic Legal ${{ github.ref_name }}"
+          body: |
+            ## Scopic Legal — ${{ github.ref_name }}
+
+            A free, private AI legal assistant that runs entirely on your computer. No data leaves your machine.
+
+            ### What's new
+            - **Scopic Legal** branding with Private Beta Program interface
+            - **Document Review mode** — upload a contract and get a structured risk analysis: executive summary, top 5 risks with severity ratings and proposed fixes
+            - **Agentic Debate mode** — structured opposing-counsel debate for any legal question
+            - **Legal Questions mode** — general startup/contract/IP legal chat
+            - **File upload** — attach `.txt`, `.md`, `.json`, `.csv` and more directly in the chat
+            - Trending questions on the welcome screen
+
+            ### How to install
+            1. Download and install **[Ollama](https://ollama.com/download)**
+            2. Open a terminal and run: `ollama pull phi3`
+            3. Run **Scopic-Setup.exe** below
+
+            ### Recommended models
+            | Computer | Model | Size |
+            |----------|-------|------|
+            | Standard (no GPU) | `phi3` | 2.2 GB |
+            | NVIDIA GPU | `mistral` | 4.1 GB |
+            | High-end GPU | `llama3` | 4.7 GB |
+
+            > **Privacy**: All conversations are stored locally. Nothing is sent to external servers.
           files: scopic/dist/*.exe
+          draft: false
+          prerelease: false
