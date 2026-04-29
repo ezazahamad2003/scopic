@@ -1,18 +1,16 @@
 import React from "react";
 
 export default function UpdateBanner({ status, version, progress, onInstall }) {
-  if (!status || status === "none") return null;
-
   const isReady = status === "downloaded";
   const isDownloading = status === "downloading";
   const isAvailable = status === "available";
-  const isError = status === "error";
+
+  if (!isReady && !isDownloading && !isAvailable) return null;
 
   let label = "";
   if (isAvailable) label = `Update available (v${version || ""})`;
   else if (isDownloading) label = `Downloading update… ${progress ? Math.round(progress) + "%" : ""}`;
   else if (isReady) label = `Update ready (v${version || ""}) — restart to install`;
-  else if (isError) label = "Update check failed";
 
   return (
     <div
@@ -24,7 +22,7 @@ export default function UpdateBanner({ status, version, progress, onInstall }) {
         maxWidth: 360,
       }}
     >
-      <span className="text-base">{isReady ? "✨" : isError ? "⚠️" : "⬇️"}</span>
+      <span className="text-base">{isReady ? "✨" : "⬇️"}</span>
       <div className="flex-1 text-xs">{label}</div>
       {isReady && (
         <button

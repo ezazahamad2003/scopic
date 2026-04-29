@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ollama list *)",
+      "Bash(curl -s http://localhost:11434/api/tags)",
+      "Bash(python3 -m json.tool)",
+      "Bash(curl -s -X POST http://localhost:11434/api/chat -H 'Content-Type: application/json' -d '{\"model\":\"phi3\",\"messages\":[{\"role\":\"user\",\"content\":\"Say hi\"}],\"stream\":false}' --max-time 30)",
+      "Bash(curl -v -X POST http://localhost:11434/api/chat -H 'Content-Type: application/json' -d '{\"model\":\"phi3\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}],\"stream\":false}' --max-time 60)",
+      "Bash(tasklist)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(gh --version)",
+      "Bash(gh auth *)",
+      "Bash(npm run *)",
+      "Bash(CSC_IDENTITY_AUTO_DISCOVERY=false npm run build:win)",
+      "Bash(CSC_IDENTITY_AUTO_DISCOVERY=false CSC_LINK=\"\" npm run build:win)",
+      "Bash(CSC_IDENTITY_AUTO_DISCOVERY=false npm --prefix /c/Users/ezaza/OneDrive/Desktop/scopic-opensource/scopic run build:win -- --win zip)",
+      "Bash(powershell.exe -Command \"Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux\")",
+      "Bash(reg query *)",
+      "Bash(powershell.exe -Command \"Get-ItemProperty 'HKCU:\\\\SOFTWARE\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\AppModelUnlock' -Name AllowDevelopmentWithoutDevLicense -ErrorAction SilentlyContinue\")",
+      "Bash(grep -E \"\\\\.\\(html|css\\)$\")",
+      "Bash(gh release create v1.0.0 --title 'Scopic Legal v1.0.0' --notes ' *)",
+      "Bash(where gh *)",
+      "Bash(winget list *)",
+      "Bash(powershell -Command \"& 'C:\\\\Program Files\\\\GitHub CLI\\\\gh.exe' --version\")",
+      "Bash(powershell -Command \"Get-Command gh -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source\")",
+      "PowerShell(winget install --id GitHub.cli -e --silent 2>&1)",
+      "Bash(curl -s \"https://api.github.com/repos/ezazahamad2003/scopic/actions/runs?per_page=5\")",
+      "Bash(curl -s \"https://api.github.com/repos/ezazahamad2003/scopic/releases\")",
+      "Bash(npm install *)"
+    ]
+  }
+}
