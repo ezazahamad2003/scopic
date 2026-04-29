@@ -9,13 +9,11 @@ import {
 import {
   LEGAL_SYSTEM_PROMPT,
   CONTRACT_REVIEW_SYSTEM_PROMPT,
-  AGENTIC_DEBATE_SYSTEM_PROMPT,
   DEFAULT_SETTINGS,
 } from "../utils/constants.js";
 
 function getSystemPrompt(mode) {
   if (mode === "document_review") return CONTRACT_REVIEW_SYSTEM_PROMPT;
-  if (mode === "agentic_debate") return AGENTIC_DEBATE_SYSTEM_PROMPT;
   return LEGAL_SYSTEM_PROMPT;
 }
 

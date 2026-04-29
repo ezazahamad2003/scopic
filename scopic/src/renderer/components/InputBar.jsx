@@ -98,10 +98,6 @@ export default function InputBar({ onSend, isStreaming, connected, activeMode })
       ? connected
         ? "Upload a document or paste contract text..."
         : "Start Ollama to begin..."
-      : activeMode === "agentic_debate"
-      ? connected
-        ? "Describe the legal dispute to debate..."
-        : "Start Ollama to begin..."
       : connected
       ? "Ask anything..."
       : "Start Ollama to begin chatting...";

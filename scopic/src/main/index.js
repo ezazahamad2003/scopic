@@ -2,6 +2,10 @@ const { app, BrowserWindow, ipcMain, shell } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const Store = require("electron-store");
+let autoUpdater = null;
+try {
+  autoUpdater = require("electron-updater").autoUpdater;
+} catch {}
 
 const isDev = !app.isPackaged && process.env.NODE_ENV !== "production";
 
@@ -246,6 +250,49 @@ ipcMain.handle("store:saveSettings", (_, settings) => {
   return true;
 });
 
+// Auto-updater wiring
+function setupAutoUpdater() {
+  if (!autoUpdater || isDev) return;
+
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  const send = (event) => {
+    mainWindow?.webContents.send("updater:event", event);
+  };
+
+  autoUpdater.on("checking-for-update", () => send({ status: "checking" }));
+  autoUpdater.on("update-available", (info) =>
+    send({ status: "available", version: info?.version })
+  );
+  autoUpdater.on("update-not-available", () => send({ status: "none" }));
+  autoUpdater.on("download-progress", (p) =>
+    send({ status: "downloading", progress: p?.percent || 0 })
+  );
+  autoUpdater.on("update-downloaded", (info) =>
+    send({ status: "downloaded", version: info?.version })
+  );
+  autoUpdater.on("error", (err) => {
+    logError(`autoUpdater error: ${err && err.message}`);
+    send({ status: "error" });
+  });
+}
+
+ipcMain.handle("updater:check", async () => {
+  if (!autoUpdater || isDev) return { skipped: true };
+  try {
+    await autoUpdater.checkForUpdates();
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+});
+
+ipcMain.on("updater:install", () => {
+  if (!autoUpdater || isDev) return;
+  autoUpdater.quitAndInstall();
+});
+
 // Window controls
 ipcMain.on("window:minimize", () => mainWindow?.minimize());
 ipcMain.on("window:maximize", () => {
@@ -259,6 +306,7 @@ ipcMain.on("window:close", () => mainWindow?.close());
 
 app.whenReady().then(() => {
   createWindow();
+  setupAutoUpdater();
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

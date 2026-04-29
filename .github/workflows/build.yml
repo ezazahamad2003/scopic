@@ -5,8 +5,6 @@ on:
     branches: [main]
     tags:
       - "v*"
-  release:
-    types: [published]
 
 permissions:
   contents: write
@@ -23,16 +21,26 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
-          cache-dependency-path: scopic/package-lock.json
 
       - name: Install dependencies
         working-directory: ./scopic
-        run: npm ci
+        run: npm install
 
-      - name: Build Windows installer
+      - name: Build renderer
         working-directory: ./scopic
-        run: npm run build:win
+        run: npx vite build
+
+      - name: Build & publish (tag push)
+        if: startsWith(github.ref, 'refs/tags/v')
+        working-directory: ./scopic
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --win --publish always
+
+      - name: Build only (non-tag push)
+        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+        working-directory: ./scopic
+        run: npx electron-builder --win --publish never
 
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4
@@ -40,38 +48,3 @@ jobs:
           name: Scopic-Windows-Installer
           path: scopic/dist/*.exe
           retention-days: 30
-
-      - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          name: "Scopic Legal ${{ github.ref_name }}"
-          body: |
-            ## Scopic Legal — ${{ github.ref_name }}
-
-            A free, private AI legal assistant that runs entirely on your computer. No data leaves your machine.
-
-            ### What's new
-            - **Scopic Legal** branding with Private Beta Program interface
-            - **Document Review mode** — upload a contract and get a structured risk analysis: executive summary, top 5 risks with severity ratings and proposed fixes
-            - **Agentic Debate mode** — structured opposing-counsel debate for any legal question
-            - **Legal Questions mode** — general startup/contract/IP legal chat
-            - **File upload** — attach `.txt`, `.md`, `.json`, `.csv` and more directly in the chat
-            - Trending questions on the welcome screen
-
-            ### How to install
-            1. Download and install **[Ollama](https://ollama.com/download)**
-            2. Open a terminal and run: `ollama pull phi3`
-            3. Run **Scopic-Setup.exe** below
-
-            ### Recommended models
-            | Computer | Model | Size |
-            |----------|-------|------|
-            | Standard (no GPU) | `phi3` | 2.2 GB |
-            | NVIDIA GPU | `mistral` | 4.1 GB |
-            | High-end GPU | `llama3` | 4.7 GB |
-
-            > **Privacy**: All conversations are stored locally. Nothing is sent to external servers.
-          files: scopic/dist/*.exe
-          draft: false
-          prerelease: false

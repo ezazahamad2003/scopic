@@ -5,7 +5,6 @@ import WelcomeScreen from "./WelcomeScreen.jsx";
 
 const MODE_LABELS = {
   document_review: "Document Review",
-  agentic_debate: "Agentic Debate",
   general: null,
 };
 
@@ -37,12 +36,12 @@ export default function ChatArea({
         <div
           className="flex items-center justify-center gap-2 py-1.5 text-xs font-medium border-b"
           style={{
-            background: activeMode === "document_review" ? "#0D1528" : "#140D28",
-            borderColor: activeMode === "document_review" ? "#1E3060" : "#2A1E50",
-            color: activeMode === "document_review" ? "#7BA4FF" : "#A78BFA",
+            background: "#0D1528",
+            borderColor: "#1E3060",
+            color: "#7BA4FF",
           }}
         >
-          <span>{activeMode === "document_review" ? "⚖️" : "✦"}</span>
+          <span>⚖️</span>
           <span>{modeLabel} Mode</span>
           <button
             onClick={() => onSetMode("general")}

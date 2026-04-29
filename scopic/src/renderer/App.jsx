@@ -1,14 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar from "./components/Sidebar.jsx";
 import ChatArea from "./components/ChatArea.jsx";
 import SettingsModal from "./components/SettingsModal.jsx";
+import DocumentVaultModal from "./components/DocumentVaultModal.jsx";
+import UpdateBanner from "./components/UpdateBanner.jsx";
 import { useOllama } from "./hooks/useOllama.js";
 import { useChat } from "./hooks/useChat.js";
 
 export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [vaultOpen, setVaultOpen] = useState(false);
   const [activeConversationId, setActiveConversationId] = useState(null);
   const [activeMode, setActiveMode] = useState("general");
+  const [updateState, setUpdateState] = useState({ status: "none", version: null, progress: 0 });
+
   const { connected, models, settings, saveSettings, recheckConnection } = useOllama();
   const {
     conversations,
@@ -20,12 +25,23 @@ export default function App() {
     deleteConversation,
   } = useChat(activeConversationId, setActiveConversationId, settings, activeMode);
 
+  // Auto-update events from main process
+  useEffect(() => {
+    if (!window.updater) return;
+    const off = window.updater.onEvent((evt) => {
+      setUpdateState((prev) => ({ ...prev, ...evt }));
+    });
+    window.updater.checkForUpdates?.();
+    return off;
+  }, []);
+
   const handleSelectConversation = (id) => {
     setActiveConversationId(id);
     loadConversation(id);
   };
 
   const handleNewConversation = () => {
+    setActiveMode("general");
     const id = createNewConversation();
     setActiveConversationId(id);
   };
@@ -39,11 +55,18 @@ export default function App() {
 
   const handleSetMode = (mode) => {
     setActiveMode(mode);
-    // Start a new conversation when switching to a mode
     if (mode !== "general") {
       const id = createNewConversation();
       setActiveConversationId(id);
     }
+  };
+
+  const handleVaultSubmit = (message) => {
+    setVaultOpen(false);
+    setActiveMode("general");
+    const id = createNewConversation();
+    setActiveConversationId(id);
+    setTimeout(() => sendMessage(message), 50);
   };
 
   return (
@@ -91,6 +114,7 @@ export default function App() {
           onDeleteConversation={handleDeleteConversation}
           onOpenSettings={() => setSettingsOpen(true)}
           onSetMode={handleSetMode}
+          onOpenDocumentVault={() => setVaultOpen(true)}
         />
         <ChatArea
           messages={currentMessages}
@@ -115,6 +139,20 @@ export default function App() {
           onClose={() => setSettingsOpen(false)}
         />
       )}
+
+      {vaultOpen && (
+        <DocumentVaultModal
+          onClose={() => setVaultOpen(false)}
+          onSubmit={handleVaultSubmit}
+        />
+      )}
+
+      <UpdateBanner
+        status={updateState.status}
+        version={updateState.version}
+        progress={updateState.progress}
+        onInstall={() => window.updater?.installUpdate()}
+      />
     </div>
   );
 }

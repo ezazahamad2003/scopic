@@ -42,3 +42,13 @@ contextBridge.exposeInMainWorld("windowControls", {
   maximize: () => ipcRenderer.send("window:maximize"),
   close: () => ipcRenderer.send("window:close"),
 });
+
+contextBridge.exposeInMainWorld("updater", {
+  checkForUpdates: () => ipcRenderer.invoke("updater:check"),
+  installUpdate: () => ipcRenderer.send("updater:install"),
+  onEvent: (callback) => {
+    const handler = (_, data) => callback(data);
+    ipcRenderer.on("updater:event", handler);
+    return () => ipcRenderer.removeListener("updater:event", handler);
+  },
+});

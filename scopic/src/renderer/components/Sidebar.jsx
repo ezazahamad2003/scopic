@@ -11,13 +11,9 @@ export default function Sidebar({
   onDeleteConversation,
   onOpenSettings,
   onSetMode,
+  onOpenDocumentVault,
 }) {
   const [hoveredId, setHoveredId] = useState(null);
-
-  const modeButtons = [
-    { id: "document_review", label: "Document Review", icon: "⚖️" },
-    { id: "agentic_debate", label: "Agentic Debate", icon: "✦" },
-  ];
 
   return (
     <aside
@@ -62,36 +58,54 @@ export default function Sidebar({
 
       {/* Mode buttons */}
       <div className="px-3 pt-3 pb-2 space-y-1">
-        {modeButtons.map((btn) => {
-          const isActive = activeMode === btn.id;
-          return (
-            <button
-              key={btn.id}
-              onClick={() => onSetMode(btn.id)}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
-              style={{
-                background: isActive ? "#1E2535" : "transparent",
-                border: isActive ? "1px solid #2A3347" : "1px solid transparent",
-                color: isActive ? "#E2E8F0" : "#6B7280",
-              }}
-              onMouseEnter={(e) => {
-                if (!isActive) {
-                  e.currentTarget.style.background = "#161B27";
-                  e.currentTarget.style.color = "#9AA0B4";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive) {
-                  e.currentTarget.style.background = "transparent";
-                  e.currentTarget.style.color = "#6B7280";
-                }
-              }}
-            >
-              <span className="text-base leading-none w-5 text-center">{btn.icon}</span>
-              {btn.label}
-            </button>
-          );
-        })}
+        <button
+          onClick={() => onSetMode("document_review")}
+          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
+          style={{
+            background: activeMode === "document_review" ? "#1E2535" : "transparent",
+            border:
+              activeMode === "document_review"
+                ? "1px solid #2A3347"
+                : "1px solid transparent",
+            color: activeMode === "document_review" ? "#E2E8F0" : "#6B7280",
+          }}
+          onMouseEnter={(e) => {
+            if (activeMode !== "document_review") {
+              e.currentTarget.style.background = "#161B27";
+              e.currentTarget.style.color = "#9AA0B4";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (activeMode !== "document_review") {
+              e.currentTarget.style.background = "transparent";
+              e.currentTarget.style.color = "#6B7280";
+            }
+          }}
+        >
+          <span className="text-base leading-none w-5 text-center">⚖️</span>
+          Document Review
+        </button>
+
+        <button
+          onClick={onOpenDocumentVault}
+          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
+          style={{
+            background: "transparent",
+            border: "1px solid transparent",
+            color: "#6B7280",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "#161B27";
+            e.currentTarget.style.color = "#9AA0B4";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "transparent";
+            e.currentTarget.style.color = "#6B7280";
+          }}
+        >
+          <span className="text-base leading-none w-5 text-center">📁</span>
+          Document Vault
+        </button>
       </div>
 
       {/* Divider */}
@@ -160,47 +174,9 @@ export default function Sidebar({
         )}
       </div>
 
-      {/* Footer */}
-      <div className="px-3 pb-4 pt-2 border-t border-[#1E2535] space-y-2">
-        <button
-          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-medium transition-all duration-150"
-          style={{
-            background: "transparent",
-            border: "1px solid #2A3347",
-            color: "#6B7280",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "#161B27";
-            e.currentTarget.style.color = "#9AA0B4";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "transparent";
-            e.currentTarget.style.color = "#6B7280";
-          }}
-        >
-          <span>+</span> Document Vault
-        </button>
-
-        <button
-          className="w-full flex items-center justify-center py-2.5 px-4 rounded-xl text-sm font-semibold tracking-wide transition-all duration-150"
-          style={{
-            background: "linear-gradient(135deg, #1a2540, #1e2d50)",
-            border: "1px solid #2A3F6F",
-            color: "#7BA4FF",
-            letterSpacing: "0.05em",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "linear-gradient(135deg, #1e2d50, #243560)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "linear-gradient(135deg, #1a2540, #1e2d50)";
-          }}
-        >
-          BOOK A MEETING
-        </button>
-
-        {/* Connection + settings row */}
-        <div className="flex items-center justify-between pt-1">
+      {/* Footer: connection + settings */}
+      <div className="px-3 pb-4 pt-2 border-t border-[#1E2535]">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs">
             <div
               className="w-1.5 h-1.5 rounded-full flex-shrink-0"

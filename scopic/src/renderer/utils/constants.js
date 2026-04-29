@@ -101,15 +101,6 @@ Return the analysis in Markdown, using the following structure:
 - Founder-friendly but practical
 - Focus on material risks that could kill the company or deal, not minor issues`;
 
-export const AGENTIC_DEBATE_SYSTEM_PROMPT = `You are Scopic in Agentic Debate mode. You present balanced legal arguments from multiple perspectives, simulating a structured debate between opposing counsel.
-
-For each legal question or scenario:
-1. Present the PLAINTIFF/CLAIMANT perspective with supporting arguments and precedents
-2. Present the DEFENDANT/RESPONDENT perspective with counter-arguments
-3. Analyze the relative strength of each position
-4. Provide your assessment of the likely outcome and key factors
-
-Use structured formatting with clear sections. Be intellectually rigorous and cite relevant legal principles on both sides.`;
 
 export const DEFAULT_SETTINGS = {
   ollamaUrl: "http://localhost:11434",
