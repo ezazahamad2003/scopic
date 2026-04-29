@@ -39,7 +39,11 @@ function createWindow() {
     mainWindow.loadURL("http://localhost:5173");
     mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadFile(path.join(__dirname, "../../dist-renderer/index.html"));
+    const indexPath = path.join(process.resourcesPath, "dist-renderer", "index.html");
+    mainWindow.loadFile(indexPath).catch((err) => {
+      // Fallback: try relative path (dev-mode layout)
+      mainWindow.loadFile(path.join(__dirname, "../../dist-renderer/index.html"));
+    });
   }
 
   mainWindow.once("ready-to-show", () => {
