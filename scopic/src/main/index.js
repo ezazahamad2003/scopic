@@ -1,8 +1,35 @@
 const { app, BrowserWindow, ipcMain, shell } = require("electron");
 const path = require("path");
+const fs = require("fs");
 const Store = require("electron-store");
 
-const isDev = process.env.NODE_ENV !== "production";
+const isDev = !app.isPackaged && process.env.NODE_ENV !== "production";
+
+function logError(msg) {
+  try {
+    const logPath = path.join(app.getPath("userData"), "startup.log");
+    fs.appendFileSync(logPath, `[${new Date().toISOString()}] ${msg}\n`);
+  } catch {}
+}
+
+function findIndexHtml() {
+  const candidates = [
+    path.join(app.getAppPath(), "dist-renderer", "index.html"),
+    path.join(__dirname, "..", "..", "dist-renderer", "index.html"),
+    path.join(process.resourcesPath || "", "dist-renderer", "index.html"),
+    path.join(process.resourcesPath || "", "app", "dist-renderer", "index.html"),
+  ];
+  for (const p of candidates) {
+    try {
+      if (fs.existsSync(p)) {
+        logError(`Found index.html at: ${p}`);
+        return p;
+      }
+    } catch {}
+  }
+  logError(`No index.html found. Checked: ${JSON.stringify(candidates)}`);
+  return candidates[0];
+}
 
 const store = new Store({
   defaults: {
@@ -31,18 +58,38 @@ function createWindow() {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
+      webSecurity: false,
     },
     show: false,
   });
+
+  // Log render-process load failures
+  mainWindow.webContents.on(
+    "did-fail-load",
+    (_e, errorCode, errorDescription, validatedURL) => {
+      const errMsg = `did-fail-load: ${errorCode} ${errorDescription} url=${validatedURL}`;
+      logError(errMsg);
+      mainWindow.webContents.executeJavaScript(
+        `document.body.innerHTML = ${JSON.stringify(
+          `<pre style="color:#fff;background:#0F1117;padding:20px;font-family:monospace;font-size:12px;white-space:pre-wrap;">Scopic failed to load.\n\n${errMsg}\n\nLog file: ${path.join(
+            app.getPath("userData"),
+            "startup.log"
+          )}</pre>`
+        )}`
+      ).catch(() => {});
+    }
+  );
 
   if (isDev) {
     mainWindow.loadURL("http://localhost:5173");
     mainWindow.webContents.openDevTools();
   } else {
-    const indexPath = path.join(process.resourcesPath, "dist-renderer", "index.html");
+    const indexPath = findIndexHtml();
+    logError(
+      `Loading: ${indexPath} | __dirname=${__dirname} | appPath=${app.getAppPath()} | resourcesPath=${process.resourcesPath}`
+    );
     mainWindow.loadFile(indexPath).catch((err) => {
-      // Fallback: try relative path (dev-mode layout)
-      mainWindow.loadFile(path.join(__dirname, "../../dist-renderer/index.html"));
+      logError(`loadFile threw: ${err && err.message}`);
     });
   }
 

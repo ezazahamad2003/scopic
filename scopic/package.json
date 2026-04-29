@@ -34,10 +34,8 @@
     "appId": "com.scopic.legal",
     "productName": "Scopic",
     "directories": { "output": "dist" },
-    "files": ["src/main/**/*", "package.json"],
-    "extraResources": [
-      { "from": "dist-renderer", "to": "dist-renderer" }
-    ],
+    "asar": false,
+    "files": ["src/main/**/*", "dist-renderer/**/*", "package.json"],
     "win": { "target": "nsis", "icon": "build/icon.ico" },
     "nsis": {
       "oneClick": true,
