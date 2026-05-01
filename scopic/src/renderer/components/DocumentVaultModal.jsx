@@ -6,6 +6,12 @@ const ACCEPTED_TEXT_TYPES = [
 ];
 const ACCEPTED_BINARY_TYPES = [".pdf", ".docx"];
 const ALL_ACCEPTED_TYPES = [...ACCEPTED_TEXT_TYPES, ...ACCEPTED_BINARY_TYPES];
+const ACCEPT_ATTR = [
+  ...ALL_ACCEPTED_TYPES,
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "text/plain",
+].join(",");
 
 function readFileAsText(file) {
   return new Promise((resolve, reject) => {
@@ -159,7 +165,7 @@ export default function DocumentVaultModal({ onClose, onSubmit }) {
             ref={fileInputRef}
             type="file"
             className="hidden"
-            accept={ALL_ACCEPTED_TYPES.join(",")}
+            accept={ACCEPT_ATTR}
             onChange={(e) => handleFile(e.target.files?.[0])}
           />
         </div>

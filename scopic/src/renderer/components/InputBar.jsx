@@ -6,6 +6,12 @@ const ACCEPTED_TEXT_TYPES = [
 ];
 const ACCEPTED_BINARY_TYPES = [".pdf", ".docx"];
 const ALL_ACCEPTED_TYPES = [...ACCEPTED_TEXT_TYPES, ...ACCEPTED_BINARY_TYPES];
+const ACCEPT_ATTR = [
+  ...ALL_ACCEPTED_TYPES,
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "text/plain",
+].join(",");
 
 function readFileAsText(file) {
   return new Promise((resolve, reject) => {
@@ -197,7 +203,7 @@ export default function InputBar({ onSend, onStop, isStreaming, connected, activ
           ref={fileInputRef}
           type="file"
           className="hidden"
-          accept={ALL_ACCEPTED_TYPES.join(",")}
+          accept={ACCEPT_ATTR}
           onChange={handleFileChange}
         />
 
@@ -214,23 +220,31 @@ export default function InputBar({ onSend, onStop, isStreaming, connected, activ
         />
 
         <button
-          onClick={isStreaming ? onStop : handleSend}
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            if (isStreaming) {
+              if (typeof onStop === "function") onStop();
+            } else {
+              handleSend();
+            }
+          }}
           disabled={!isStreaming && !canSend}
           className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-150 mb-0.5"
           style={{
             background: isStreaming
-              ? "#2a1a1a"
+              ? "#DC2626"
               : canSend
               ? "linear-gradient(135deg, #3A5A9F, #2A4A8F)"
               : "#1E2535",
-            border: isStreaming ? "1px solid #6b2020" : "none",
-            color: isStreaming ? "#EF4444" : canSend ? "#FFFFFF" : "#4A5568",
+            border: "none",
+            color: isStreaming ? "#FFFFFF" : canSend ? "#FFFFFF" : "#4A5568",
             cursor: isStreaming || canSend ? "pointer" : "not-allowed",
           }}
           title={isStreaming ? "Stop response" : "Send"}
         >
           {isStreaming ? (
-            <div className="w-3 h-3 rounded-sm" style={{ background: "#EF4444" }} />
+            <div className="w-3 h-3 rounded-sm" style={{ background: "#FFFFFF" }} />
           ) : (
             <svg
               width="16"

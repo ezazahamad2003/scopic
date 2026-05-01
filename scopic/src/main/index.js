@@ -3,9 +3,9 @@ const path = require("path");
 const fs = require("fs");
 const Store = require("electron-store");
 let mammoth = null;
-let pdfParse = null;
-try { mammoth = require("mammoth"); } catch {}
-try { pdfParse = require("pdf-parse"); } catch {}
+let PDFParse = null;
+try { mammoth = require("mammoth"); } catch (e) { console.error("mammoth load failed:", e); }
+try { ({ PDFParse } = require("pdf-parse")); } catch (e) { console.error("pdf-parse load failed:", e); }
 let autoUpdater = null;
 try {
   autoUpdater = require("electron-updater").autoUpdater;
@@ -302,16 +302,28 @@ ipcMain.handle("file:parse", async (_, { buffer, filename }) => {
   const ext = path.extname(filename).toLowerCase();
   try {
     const buf = Buffer.from(buffer);
-    if (ext === ".docx" && mammoth) {
+    if (ext === ".docx") {
+      if (!mammoth) return { text: null, error: "DOCX parser unavailable" };
       const result = await mammoth.extractRawText({ buffer: buf });
       return { text: result.value, error: null };
     }
-    if (ext === ".pdf" && pdfParse) {
-      const data = await pdfParse(buf);
-      return { text: data.text, error: null };
+    if (ext === ".pdf") {
+      if (!PDFParse) return { text: null, error: "PDF parser unavailable" };
+      const parser = new PDFParse({ data: buf });
+      try {
+        const result = await parser.getText();
+        const text = (result?.pages || [])
+          .map((p) => p.text || "")
+          .join("\n\n")
+          .trim() || result?.text || "";
+        return { text, error: null };
+      } finally {
+        try { await parser.destroy(); } catch {}
+      }
     }
     return { text: null, error: "Unsupported format" };
   } catch (err) {
+    logError(`file:parse failed for ${filename}: ${err && err.message}`);
     return { text: null, error: err.message || "Failed to parse file" };
   }
 });
