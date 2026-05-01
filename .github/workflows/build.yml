@@ -41,19 +41,23 @@ jobs:
           path: scopic/dist/*.exe
           retention-days: 30
 
-      - name: Create GitHub Release (tag push)
+      - name: Create GitHub Release with gh CLI (preserves filenames)
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          name: "Scopic ${{ github.ref_name }}"
-          tag_name: ${{ github.ref_name }}
-          body: |
-            ## Scopic ${{ github.ref_name }}
-
-            Auto-update release. Installed clients on a previous version will pick this up automatically on next launch.
-          files: |
-            scopic/dist/*.exe
-            scopic/dist/*.exe.blockmap
-            scopic/dist/latest.yml
-          draft: false
-          prerelease: false
+        working-directory: ./scopic
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          # Delete release if it already exists (idempotent)
+          gh release delete "$TAG" --yes --cleanup-tag=false 2>/dev/null || true
+          # Create release and upload assets with exact filenames preserved
+          gh release create "$TAG" \
+            --title "Scopic $TAG" \
+            --notes "Auto-update release. Installed clients pick this up automatically on next launch." \
+            dist/*.exe dist/*.exe.blockmap dist/latest.yml
+          # Verify the assets that latest.yml references actually exist
+          echo "--- latest.yml content ---"
+          cat dist/latest.yml
+          echo "--- uploaded assets ---"
+          gh release view "$TAG" --json assets --jq '.assets[].name'
