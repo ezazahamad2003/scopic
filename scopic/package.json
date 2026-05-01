@@ -1,6 +1,6 @@
 {
   "name": "scopic",
-  "version": "1.5.4",
+  "version": "1.5.5",
   "description": "Scopic - Local-first legal AI assistant powered by Ollama",
   "main": "src/main/index.js",
   "author": "Scopic",
@@ -36,6 +36,7 @@
   "build": {
     "appId": "com.scopic.legal",
     "productName": "Scopic",
+    "artifactName": "${productName}.Setup.${version}.${ext}",
     "directories": {
       "output": "dist"
     },
