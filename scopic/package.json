@@ -1,6 +1,6 @@
 {
   "name": "scopic",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "description": "Scopic - Local-first legal AI assistant powered by Ollama",
   "main": "src/main/index.js",
   "author": "Scopic",

@@ -133,6 +133,8 @@ export default function App() {
         <SettingsModal
           settings={settings}
           models={models}
+          updateState={updateState}
+          onInstallUpdate={() => window.updater?.installUpdate()}
           onSave={(s) => {
             saveSettings(s);
             setSettingsOpen(false);

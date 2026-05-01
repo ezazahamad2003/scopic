@@ -1,12 +1,52 @@
 import React, { useState, useEffect } from "react";
 import { DEFAULT_SETTINGS } from "../utils/constants.js";
 
-export default function SettingsModal({ settings, models, onSave, onClose }) {
+export default function SettingsModal({ settings, models, onSave, onClose, updateState, onInstallUpdate }) {
   const [form, setForm] = useState({
     ollamaUrl: settings?.ollamaUrl || DEFAULT_SETTINGS.ollamaUrl,
     model: settings?.model || DEFAULT_SETTINGS.model,
     temperature: settings?.temperature ?? DEFAULT_SETTINGS.temperature,
   });
+  const [version, setVersion] = useState("");
+  const [isPackaged, setIsPackaged] = useState(true);
+  const [checkResult, setCheckResult] = useState(null);
+  const [checking, setChecking] = useState(false);
+
+  useEffect(() => {
+    window.appInfo?.getVersion().then(setVersion).catch(() => {});
+    window.appInfo?.isPackaged().then(setIsPackaged).catch(() => {});
+  }, []);
+
+  const handleCheckForUpdates = async () => {
+    if (!window.updater) return;
+    setChecking(true);
+    setCheckResult(null);
+    try {
+      const result = await window.updater.checkForUpdates();
+      setCheckResult(result);
+    } catch (e) {
+      setCheckResult({ ok: false, error: e.message });
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  const updStatus = updateState?.status || "none";
+  const updVersion = updateState?.version;
+  const updProgress = updateState?.progress || 0;
+  const updError = updateState?.error;
+
+  let updateLine = "You're up to date.";
+  let updateColor = "#6B7280";
+  if (updStatus === "checking") { updateLine = "Checking for updates…"; updateColor = "#7BA4FF"; }
+  else if (updStatus === "available") { updateLine = `Update available: v${updVersion}`; updateColor = "#7BA4FF"; }
+  else if (updStatus === "downloading") { updateLine = `Downloading… ${Math.round(updProgress)}%`; updateColor = "#7BA4FF"; }
+  else if (updStatus === "downloaded") { updateLine = `v${updVersion} ready to install`; updateColor = "#10B981"; }
+  else if (updStatus === "error") { updateLine = `Update error: ${updError || "unknown"}`; updateColor = "#EF4444"; }
+  else if (checkResult?.skipped) { updateLine = `Update check skipped (${checkResult.reason || "unknown"})`; updateColor = "#9AA0B4"; }
+  else if (checkResult?.ok && checkResult?.updateInfo && checkResult.updateInfo.version !== version) { updateLine = `Update available: v${checkResult.updateInfo.version}`; updateColor = "#7BA4FF"; }
+  else if (checkResult?.ok) { updateLine = "You're on the latest version."; updateColor = "#10B981"; }
+  else if (checkResult?.error) { updateLine = `Check failed: ${checkResult.error}`; updateColor = "#EF4444"; }
 
   const handleSave = () => {
     onSave(form);
@@ -116,6 +156,44 @@ export default function SettingsModal({ settings, models, onSave, onClose }) {
             <div className="flex justify-between text-xs text-gray-600 mt-1">
               <span>Precise (0.0)</span>
               <span>Creative (1.0)</span>
+            </div>
+          </div>
+        </div>
+
+        {/* About & Updates */}
+        <div className="mt-6 pt-5 border-t" style={{ borderColor: "#2A3347" }}>
+          <label className="block text-xs font-medium text-gray-400 mb-3 uppercase tracking-wide">
+            About & Updates
+          </label>
+          <div className="rounded-lg p-3" style={{ background: "#0F1117", border: "1px solid #2A3347" }}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-gray-400">Current version</span>
+              <span className="text-sm font-mono" style={{ color: "#E8E8E8" }}>
+                v{version || "…"}{!isPackaged && " (dev)"}
+              </span>
+            </div>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs text-gray-400">Status</span>
+              <span className="text-xs" style={{ color: updateColor }}>{updateLine}</span>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleCheckForUpdates}
+                disabled={checking || updStatus === "checking" || updStatus === "downloading"}
+                className="flex-1 py-2 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
+                style={{ background: "#1E2535", border: "1px solid #2A3347", color: "#E8E8E8" }}
+              >
+                {checking ? "Checking…" : "Check for updates"}
+              </button>
+              {updStatus === "downloaded" && (
+                <button
+                  onClick={onInstallUpdate}
+                  className="flex-1 py-2 rounded-lg text-xs font-medium transition-all"
+                  style={{ background: "linear-gradient(135deg, #10B981, #059669)", color: "#FFFFFF" }}
+                >
+                  Restart & install
+                </button>
+              )}
             </div>
           </div>
         </div>

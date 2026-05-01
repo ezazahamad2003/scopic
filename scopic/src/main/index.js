@@ -277,16 +277,24 @@ function setupAutoUpdater() {
     send({ status: "downloaded", version: info?.version })
   );
   autoUpdater.on("error", (err) => {
-    logError(`autoUpdater error: ${err && err.message}`);
-    send({ status: "error" });
+    const msg = (err && (err.message || String(err))) || "unknown";
+    logError(`autoUpdater error: ${msg}`);
+    send({ status: "error", error: msg });
   });
 }
 
 ipcMain.handle("updater:check", async () => {
-  if (!autoUpdater || isDev) return { skipped: true };
+  if (!autoUpdater) return { skipped: true, reason: "updater not available" };
+  if (isDev) return { skipped: true, reason: "dev mode" };
   try {
-    await autoUpdater.checkForUpdates();
-    return { ok: true };
+    const result = await autoUpdater.checkForUpdates();
+    return {
+      ok: true,
+      currentVersion: app.getVersion(),
+      updateInfo: result?.updateInfo
+        ? { version: result.updateInfo.version, releaseDate: result.updateInfo.releaseDate }
+        : null,
+    };
   } catch (e) {
     return { ok: false, error: e.message };
   }
@@ -327,6 +335,10 @@ ipcMain.handle("file:parse", async (_, { buffer, filename }) => {
     return { text: null, error: err.message || "Failed to parse file" };
   }
 });
+
+// IPC: App info
+ipcMain.handle("app:getVersion", () => app.getVersion());
+ipcMain.handle("app:isPackaged", () => app.isPackaged);
 
 // Window controls
 ipcMain.on("window:minimize", () => mainWindow?.minimize());

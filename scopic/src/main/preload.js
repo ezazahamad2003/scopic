@@ -43,6 +43,11 @@ contextBridge.exposeInMainWorld("windowControls", {
   close: () => ipcRenderer.send("window:close"),
 });
 
+contextBridge.exposeInMainWorld("appInfo", {
+  getVersion: () => ipcRenderer.invoke("app:getVersion"),
+  isPackaged: () => ipcRenderer.invoke("app:isPackaged"),
+});
+
 contextBridge.exposeInMainWorld("fileParser", {
   parse: (buffer, filename) => ipcRenderer.invoke("file:parse", { buffer, filename }),
 });
