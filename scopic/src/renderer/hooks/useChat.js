@@ -184,6 +184,10 @@ export function useChat(activeConversationId, setActiveConversationId, settings,
     [activeConversationId, currentMessages, isStreaming, settings, setActiveConversationId, activeMode]
   );
 
+  const stopStreaming = useCallback(() => {
+    abortRef.current?.abort();
+  }, []);
+
   const deleteConversation = useCallback(async (id) => {
     await deleteConv(id);
     setConversations((prev) => prev.filter((c) => c.id !== id));
@@ -195,6 +199,7 @@ export function useChat(activeConversationId, setActiveConversationId, settings,
     currentMessages,
     isStreaming,
     sendMessage,
+    stopStreaming,
     createNewConversation,
     loadConversation,
     deleteConversation,

@@ -4,6 +4,8 @@ const ACCEPTED_TEXT_TYPES = [
   ".txt", ".md", ".json", ".js", ".ts", ".jsx", ".tsx",
   ".html", ".css", ".csv", ".py", ".xml", ".yaml", ".yml",
 ];
+const ACCEPTED_BINARY_TYPES = [".pdf", ".docx"];
+const ALL_ACCEPTED_TYPES = [...ACCEPTED_TEXT_TYPES, ...ACCEPTED_BINARY_TYPES];
 
 function readFileAsText(file) {
   return new Promise((resolve, reject) => {
@@ -14,7 +16,16 @@ function readFileAsText(file) {
   });
 }
 
-export default function InputBar({ onSend, isStreaming, connected, activeMode }) {
+function readFileAsArrayBuffer(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.onerror = () => reject(new Error("Failed to read file"));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+export default function InputBar({ onSend, onStop, isStreaming, connected, activeMode }) {
   const [value, setValue] = useState("");
   const [attachedFile, setAttachedFile] = useState(null);
   const textareaRef = useRef(null);
@@ -65,29 +76,38 @@ export default function InputBar({ onSend, isStreaming, connected, activeMode })
     e.target.value = "";
 
     const ext = "." + file.name.split(".").pop().toLowerCase();
-    if (!ACCEPTED_TEXT_TYPES.includes(ext)) {
+    if (!ALL_ACCEPTED_TYPES.includes(ext)) {
       setAttachedFile({
         name: file.name,
         content: null,
-        error: `Unsupported file type. Supported: ${ACCEPTED_TEXT_TYPES.join(", ")}`,
+        error: `Unsupported file type. Supported: ${ALL_ACCEPTED_TYPES.join(", ")}`,
       });
       return;
     }
 
-    if (file.size > 500 * 1024) {
+    const maxSize = ACCEPTED_BINARY_TYPES.includes(ext) ? 10 * 1024 * 1024 : 500 * 1024;
+    if (file.size > maxSize) {
       setAttachedFile({
         name: file.name,
         content: null,
-        error: "File too large (max 500 KB). Please paste text directly.",
+        error: `File too large (max ${ACCEPTED_BINARY_TYPES.includes(ext) ? "10 MB" : "500 KB"}).`,
       });
       return;
     }
 
     try {
-      const text = await readFileAsText(file);
+      let text;
+      if (ACCEPTED_BINARY_TYPES.includes(ext)) {
+        const buffer = await readFileAsArrayBuffer(file);
+        const result = await window.fileParser.parse(buffer, file.name);
+        if (result.error) throw new Error(result.error);
+        text = result.text;
+      } else {
+        text = await readFileAsText(file);
+      }
       setAttachedFile({ name: file.name, content: text, error: null });
-    } catch {
-      setAttachedFile({ name: file.name, content: null, error: "Could not read file." });
+    } catch (err) {
+      setAttachedFile({ name: file.name, content: null, error: err.message || "Could not read file." });
     }
   };
 
@@ -167,7 +187,7 @@ export default function InputBar({ onSend, isStreaming, connected, activeMode })
             e.currentTarget.style.borderColor = "#2A3347";
             e.currentTarget.style.color = "#6B7280";
           }}
-          title="Attach document (.txt, .md, .json, etc.)"
+          title="Attach document (.txt, .md, .pdf, .docx, etc.)"
           type="button"
         >
           <span className="text-lg leading-none">+</span>
@@ -177,7 +197,7 @@ export default function InputBar({ onSend, isStreaming, connected, activeMode })
           ref={fileInputRef}
           type="file"
           className="hidden"
-          accept={ACCEPTED_TEXT_TYPES.join(",")}
+          accept={ALL_ACCEPTED_TYPES.join(",")}
           onChange={handleFileChange}
         />
 
@@ -194,19 +214,23 @@ export default function InputBar({ onSend, isStreaming, connected, activeMode })
         />
 
         <button
-          onClick={handleSend}
-          disabled={!canSend}
+          onClick={isStreaming ? onStop : handleSend}
+          disabled={!isStreaming && !canSend}
           className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-150 mb-0.5"
           style={{
-            background: canSend
+            background: isStreaming
+              ? "#2a1a1a"
+              : canSend
               ? "linear-gradient(135deg, #3A5A9F, #2A4A8F)"
               : "#1E2535",
-            color: canSend ? "#FFFFFF" : "#4A5568",
-            cursor: canSend ? "pointer" : "not-allowed",
+            border: isStreaming ? "1px solid #6b2020" : "none",
+            color: isStreaming ? "#EF4444" : canSend ? "#FFFFFF" : "#4A5568",
+            cursor: isStreaming || canSend ? "pointer" : "not-allowed",
           }}
+          title={isStreaming ? "Stop response" : "Send"}
         >
           {isStreaming ? (
-            <div className="w-3 h-3 rounded-sm" style={{ background: "#4A5568" }} />
+            <div className="w-3 h-3 rounded-sm" style={{ background: "#EF4444" }} />
           ) : (
             <svg
               width="16"

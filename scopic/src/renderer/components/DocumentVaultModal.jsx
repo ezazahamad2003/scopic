@@ -4,6 +4,8 @@ const ACCEPTED_TEXT_TYPES = [
   ".txt", ".md", ".json", ".js", ".ts", ".jsx", ".tsx",
   ".html", ".css", ".csv", ".py", ".xml", ".yaml", ".yml",
 ];
+const ACCEPTED_BINARY_TYPES = [".pdf", ".docx"];
+const ALL_ACCEPTED_TYPES = [...ACCEPTED_TEXT_TYPES, ...ACCEPTED_BINARY_TYPES];
 
 function readFileAsText(file) {
   return new Promise((resolve, reject) => {
@@ -11,6 +13,15 @@ function readFileAsText(file) {
     reader.onload = (e) => resolve(e.target.result);
     reader.onerror = () => reject(new Error("Failed to read file"));
     reader.readAsText(file, "utf-8");
+  });
+}
+
+function readFileAsArrayBuffer(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.onerror = () => reject(new Error("Failed to read file"));
+    reader.readAsArrayBuffer(file);
   });
 }
 
@@ -26,19 +37,28 @@ export default function DocumentVaultModal({ onClose, onSubmit }) {
     setFileError(null);
 
     const ext = "." + f.name.split(".").pop().toLowerCase();
-    if (!ACCEPTED_TEXT_TYPES.includes(ext)) {
-      setFileError(`Unsupported file type. Use: ${ACCEPTED_TEXT_TYPES.join(", ")}`);
+    if (!ALL_ACCEPTED_TYPES.includes(ext)) {
+      setFileError(`Unsupported file type. Use: ${ALL_ACCEPTED_TYPES.join(", ")}`);
       return;
     }
-    if (f.size > 500 * 1024) {
-      setFileError("File too large (max 500 KB).");
+    const maxSize = ACCEPTED_BINARY_TYPES.includes(ext) ? 10 * 1024 * 1024 : 500 * 1024;
+    if (f.size > maxSize) {
+      setFileError(`File too large (max ${ACCEPTED_BINARY_TYPES.includes(ext) ? "10 MB" : "500 KB"}).`);
       return;
     }
     try {
-      const content = await readFileAsText(f);
+      let content;
+      if (ACCEPTED_BINARY_TYPES.includes(ext)) {
+        const buffer = await readFileAsArrayBuffer(f);
+        const result = await window.fileParser.parse(buffer, f.name);
+        if (result.error) throw new Error(result.error);
+        content = result.text;
+      } else {
+        content = await readFileAsText(f);
+      }
       setFile({ name: f.name, content });
-    } catch {
-      setFileError("Could not read file.");
+    } catch (err) {
+      setFileError(err.message || "Could not read file.");
     }
   };
 
@@ -131,7 +151,7 @@ export default function DocumentVaultModal({ onClose, onSubmit }) {
                 Click to upload or drag a document here
               </div>
               <div className="text-xs mt-1" style={{ color: "#4A5568" }}>
-                .txt, .md, .json, .csv, .html, etc. (max 500 KB)
+                .pdf, .docx, .txt, .md, .csv, etc. (max 10 MB for PDF/DOCX)
               </div>
             </div>
           )}
@@ -139,7 +159,7 @@ export default function DocumentVaultModal({ onClose, onSubmit }) {
             ref={fileInputRef}
             type="file"
             className="hidden"
-            accept={ACCEPTED_TEXT_TYPES.join(",")}
+            accept={ALL_ACCEPTED_TYPES.join(",")}
             onChange={(e) => handleFile(e.target.files?.[0])}
           />
         </div>

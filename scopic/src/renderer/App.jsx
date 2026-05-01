@@ -20,6 +20,7 @@ export default function App() {
     currentMessages,
     isStreaming,
     sendMessage,
+    stopStreaming,
     createNewConversation,
     loadConversation,
     deleteConversation,
@@ -121,6 +122,7 @@ export default function App() {
           isStreaming={isStreaming}
           connected={connected}
           onSend={sendMessage}
+          onStop={stopStreaming}
           conversationId={activeConversationId}
           activeMode={activeMode}
           onSetMode={handleSetMode}

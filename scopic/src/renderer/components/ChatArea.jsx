@@ -13,6 +13,7 @@ export default function ChatArea({
   isStreaming,
   connected,
   onSend,
+  onStop,
   conversationId,
   activeMode,
   onSetMode,
@@ -78,6 +79,7 @@ export default function ChatArea({
       {/* Input bar */}
       <InputBar
         onSend={onSend}
+        onStop={onStop}
         isStreaming={isStreaming}
         connected={connected}
         activeMode={activeMode}

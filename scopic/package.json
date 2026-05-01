@@ -1,6 +1,6 @@
 {
   "name": "scopic",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "Scopic - Local-first legal AI assistant powered by Ollama",
   "main": "src/main/index.js",
   "author": "Scopic",
@@ -16,7 +16,9 @@
   },
   "dependencies": {
     "electron-store": "^8.2.0",
-    "electron-updater": "^6.8.3"
+    "electron-updater": "^6.8.3",
+    "mammoth": "^1.12.0",
+    "pdf-parse": "^2.4.5"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",

@@ -43,6 +43,10 @@ contextBridge.exposeInMainWorld("windowControls", {
   close: () => ipcRenderer.send("window:close"),
 });
 
+contextBridge.exposeInMainWorld("fileParser", {
+  parse: (buffer, filename) => ipcRenderer.invoke("file:parse", { buffer, filename }),
+});
+
 contextBridge.exposeInMainWorld("updater", {
   checkForUpdates: () => ipcRenderer.invoke("updater:check"),
   installUpdate: () => ipcRenderer.send("updater:install"),

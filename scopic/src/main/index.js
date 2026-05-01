@@ -2,6 +2,10 @@ const { app, BrowserWindow, ipcMain, shell } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const Store = require("electron-store");
+let mammoth = null;
+let pdfParse = null;
+try { mammoth = require("mammoth"); } catch {}
+try { pdfParse = require("pdf-parse"); } catch {}
 let autoUpdater = null;
 try {
   autoUpdater = require("electron-updater").autoUpdater;
@@ -291,6 +295,25 @@ ipcMain.handle("updater:check", async () => {
 ipcMain.on("updater:install", () => {
   if (!autoUpdater || isDev) return;
   autoUpdater.quitAndInstall();
+});
+
+// IPC: File parsing (PDF, DOCX)
+ipcMain.handle("file:parse", async (_, { buffer, filename }) => {
+  const ext = path.extname(filename).toLowerCase();
+  try {
+    const buf = Buffer.from(buffer);
+    if (ext === ".docx" && mammoth) {
+      const result = await mammoth.extractRawText({ buffer: buf });
+      return { text: result.value, error: null };
+    }
+    if (ext === ".pdf" && pdfParse) {
+      const data = await pdfParse(buf);
+      return { text: data.text, error: null };
+    }
+    return { text: null, error: "Unsupported format" };
+  } catch (err) {
+    return { text: null, error: err.message || "Failed to parse file" };
+  }
 });
 
 // Window controls
