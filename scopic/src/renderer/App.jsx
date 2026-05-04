@@ -1,20 +1,31 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Sidebar from "./components/Sidebar.jsx";
 import ChatArea from "./components/ChatArea.jsx";
 import SettingsModal from "./components/SettingsModal.jsx";
 import DocumentVaultModal from "./components/DocumentVaultModal.jsx";
+import ProjectModal from "./components/ProjectModal.jsx";
 import UpdateBanner from "./components/UpdateBanner.jsx";
 import { useOllama } from "./hooks/useOllama.js";
 import { useChat } from "./hooks/useChat.js";
+import { useProjects } from "./hooks/useProjects.js";
 
 export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [vaultOpen, setVaultOpen] = useState(false);
+  const [projectModalState, setProjectModalState] = useState({ open: false, project: null });
   const [activeConversationId, setActiveConversationId] = useState(null);
+  const [activeProjectId, setActiveProjectId] = useState(null);
   const [activeMode, setActiveMode] = useState("general");
   const [updateState, setUpdateState] = useState({ status: "none", version: null, progress: 0 });
 
   const { connected, models, settings, saveSettings, recheckConnection } = useOllama();
+  const { projects, upsertProject, deleteProject } = useProjects();
+
+  const activeProject = useMemo(
+    () => projects.find((p) => p.id === activeProjectId) || null,
+    [projects, activeProjectId]
+  );
+
   const {
     conversations,
     currentMessages,
@@ -24,7 +35,8 @@ export default function App() {
     createNewConversation,
     loadConversation,
     deleteConversation,
-  } = useChat(activeConversationId, setActiveConversationId, settings, activeMode);
+    moveConversation,
+  } = useChat(activeConversationId, setActiveConversationId, settings, activeMode, activeProject, activeProjectId);
 
   // Auto-update events from main process
   useEffect(() => {
@@ -39,6 +51,11 @@ export default function App() {
   const handleSelectConversation = (id) => {
     setActiveConversationId(id);
     loadConversation(id);
+    // When opening a conversation, follow it into its project (if any).
+    const conv = conversations.find((c) => c.id === id);
+    if (conv?.projectId !== undefined) {
+      setActiveProjectId(conv.projectId || null);
+    }
   };
 
   const handleNewConversation = () => {
@@ -68,6 +85,30 @@ export default function App() {
     const id = createNewConversation();
     setActiveConversationId(id);
     setTimeout(() => sendMessage(message), 50);
+  };
+
+  const handleNewProject = () => {
+    setProjectModalState({ open: true, project: null });
+  };
+
+  const handleEditProject = (project) => {
+    setProjectModalState({ open: true, project });
+  };
+
+  const handleSaveProject = async (project) => {
+    await upsertProject(project);
+    setProjectModalState({ open: false, project: null });
+    setActiveProjectId(project.id);
+  };
+
+  const handleDeleteProject = async (id) => {
+    await deleteProject(id);
+    setProjectModalState({ open: false, project: null });
+    if (activeProjectId === id) setActiveProjectId(null);
+  };
+
+  const handleSelectProject = (id) => {
+    setActiveProjectId((prev) => (prev === id ? null : id));
   };
 
   return (
@@ -106,16 +147,22 @@ export default function App() {
       <div className="flex w-full mt-8" style={{ height: "calc(100vh - 2rem)" }}>
         <Sidebar
           conversations={conversations}
+          projects={projects}
           activeId={activeConversationId}
+          activeProjectId={activeProjectId}
           connected={connected}
           settings={settings}
           activeMode={activeMode}
           onSelectConversation={handleSelectConversation}
           onNewConversation={handleNewConversation}
           onDeleteConversation={handleDeleteConversation}
+          onMoveConversation={moveConversation}
           onOpenSettings={() => setSettingsOpen(true)}
           onSetMode={handleSetMode}
           onOpenDocumentVault={() => setVaultOpen(true)}
+          onNewProject={handleNewProject}
+          onEditProject={handleEditProject}
+          onSelectProject={handleSelectProject}
         />
         <ChatArea
           messages={currentMessages}
@@ -126,6 +173,8 @@ export default function App() {
           conversationId={activeConversationId}
           activeMode={activeMode}
           onSetMode={handleSetMode}
+          provider={settings?.provider || "ollama"}
+          activeProject={activeProject}
         />
       </div>
 
@@ -148,6 +197,15 @@ export default function App() {
         <DocumentVaultModal
           onClose={() => setVaultOpen(false)}
           onSubmit={handleVaultSubmit}
+        />
+      )}
+
+      {projectModalState.open && (
+        <ProjectModal
+          project={projectModalState.project}
+          onSave={handleSaveProject}
+          onDelete={handleDeleteProject}
+          onClose={() => setProjectModalState({ open: false, project: null })}
         />
       )}
 

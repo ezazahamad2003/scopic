@@ -2,9 +2,11 @@ import React, { useState, useRef, useEffect } from "react";
 
 const ACCEPTED_TEXT_TYPES = [
   ".txt", ".md", ".json", ".js", ".ts", ".jsx", ".tsx",
-  ".html", ".css", ".csv", ".py", ".xml", ".yaml", ".yml",
+  ".html", ".css", ".py", ".xml", ".yaml", ".yml",
 ];
-const ACCEPTED_BINARY_TYPES = [".pdf", ".docx"];
+// Tabular and rich-doc files go through the main-process parser so we
+// always serve the model clean text (and so xlsx can be added later).
+const ACCEPTED_BINARY_TYPES = [".pdf", ".docx", ".csv", ".tsv"];
 const ALL_ACCEPTED_TYPES = [...ACCEPTED_TEXT_TYPES, ...ACCEPTED_BINARY_TYPES];
 const ACCEPT_ATTR = [
   ...ALL_ACCEPTED_TYPES,
@@ -12,6 +14,17 @@ const ACCEPT_ATTR = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "text/plain",
 ].join(",");
+
+const PROVIDER_LABELS = {
+  ollama: "Ollama",
+  anthropic: "Anthropic",
+  openai: "OpenAI",
+  gemini: "Google Gemini",
+};
+
+function providerLabel(p) {
+  return PROVIDER_LABELS[p] || "provider";
+}
 
 function readFileAsText(file) {
   return new Promise((resolve, reject) => {
@@ -31,7 +44,7 @@ function readFileAsArrayBuffer(file) {
   });
 }
 
-export default function InputBar({ onSend, onStop, isStreaming, connected, activeMode }) {
+export default function InputBar({ onSend, onStop, isStreaming, connected, activeMode, provider }) {
   const [value, setValue] = useState("");
   const [attachedFile, setAttachedFile] = useState(null);
   const textareaRef = useRef(null);
@@ -119,14 +132,19 @@ export default function InputBar({ onSend, onStop, isStreaming, connected, activ
 
   const canSend = (value.trim() || (attachedFile && !attachedFile.error)) && !isStreaming && connected;
 
+  const offlineHint =
+    provider === "ollama"
+      ? "Start Ollama to begin..."
+      : "Add an API key in Settings...";
+
   const placeholder =
     activeMode === "document_review"
       ? connected
         ? "Upload a document or paste contract text..."
-        : "Start Ollama to begin..."
+        : offlineHint
       : connected
       ? "Ask anything..."
-      : "Start Ollama to begin chatting...";
+      : offlineHint;
 
   return (
     <div
@@ -135,15 +153,38 @@ export default function InputBar({ onSend, onStop, isStreaming, connected, activ
     >
       {!connected && (
         <div
-          className="mb-3 px-4 py-2 rounded-lg text-sm flex items-center gap-2"
+          className="mb-3 px-4 py-2.5 rounded-lg text-sm"
           style={{
             background: "#1a1500",
             border: "1px solid #3a2e0033",
             color: "#EAB308",
           }}
         >
-          <span>⚠️</span>
-          <span>Ollama not detected. Please start Ollama to use Scopic.</span>
+          {provider === "ollama" ? (
+            <div>
+              <div className="flex items-center gap-2 mb-1.5">
+                <span>⚠️</span>
+                <span className="font-medium">Ollama not detected.</span>
+              </div>
+              <div className="text-xs leading-relaxed" style={{ color: "#C9A55C" }}>
+                Open Command Prompt and run:
+                <code
+                  className="block mt-1.5 px-2.5 py-1.5 rounded font-mono text-[12px]"
+                  style={{ background: "#0D1117", border: "1px solid #2A3347", color: "#E8E8E8" }}
+                >
+                  ollama serve
+                </code>
+                <span className="block mt-1.5 opacity-80">
+                  No model installed yet? Run <code className="px-1 py-0.5 rounded" style={{ background: "#0D1117", color: "#E8E8E8" }}>ollama pull phi3</code> first. Or switch to a cloud provider in Settings.
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span>⚠️</span>
+              <span>API key not set. Open Settings and add your {providerLabel(provider)} key.</span>
+            </div>
+          )}
         </div>
       )}
 

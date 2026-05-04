@@ -12,25 +12,86 @@ import {
   DEFAULT_SETTINGS,
 } from "../utils/constants.js";
 
-function getSystemPrompt(mode) {
-  if (mode === "document_review") return CONTRACT_REVIEW_SYSTEM_PROMPT;
-  return LEGAL_SYSTEM_PROMPT;
+function getSystemPrompt(mode, project) {
+  const base = mode === "document_review" ? CONTRACT_REVIEW_SYSTEM_PROMPT : LEGAL_SYSTEM_PROMPT;
+  if (!project || !project.description?.trim()) return base;
+  const projectBlock =
+    `## ACTIVE PROJECT CONTEXT\n\nProject: ${project.name}\n\n${project.description.trim()}\n\nKeep this context in mind for all responses in this project.`;
+  return `${projectBlock}\n\n---\n\n${base}`;
 }
 
-export function useChat(activeConversationId, setActiveConversationId, settings, activeMode) {
+export function useChat(activeConversationId, setActiveConversationId, settings, activeMode, activeProject, activeProjectId) {
   const [conversations, setConversations] = useState([]);
   const [currentMessages, setCurrentMessages] = useState([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const streamingMessageRef = useRef("");
   const activeIdRef = useRef(activeConversationId);
-  const abortRef = useRef(null);
+  const activeModeRef = useRef(activeMode);
+  const activeProjectIdRef = useRef(activeProjectId);
+  const requestIdRef = useRef(null);
 
   useEffect(() => {
     activeIdRef.current = activeConversationId;
   }, [activeConversationId]);
 
   useEffect(() => {
+    activeModeRef.current = activeMode;
+  }, [activeMode]);
+
+  useEffect(() => {
+    activeProjectIdRef.current = activeProjectId;
+  }, [activeProjectId]);
+
+  useEffect(() => {
     loadConversations();
+  }, []);
+
+  // Wire up streaming listeners once.
+  useEffect(() => {
+    if (!window.chat) return;
+
+    const offToken = window.chat.onToken(({ requestId, token }) => {
+      if (requestId !== requestIdRef.current) return;
+      streamingMessageRef.current += token;
+      const snapshot = streamingMessageRef.current;
+      setCurrentMessages((prev) => {
+        const updated = [...prev];
+        const last = updated.length - 1;
+        if (updated[last]?.role === "assistant") {
+          updated[last] = { ...updated[last], content: snapshot };
+        }
+        return updated;
+      });
+    });
+
+    const offDone = window.chat.onDone(({ requestId }) => {
+      if (requestId !== requestIdRef.current) return;
+      finalizeStream();
+    });
+
+    const offError = window.chat.onError(({ requestId, error }) => {
+      if (requestId !== requestIdRef.current) return;
+      setCurrentMessages((prev) => {
+        const updated = [...prev];
+        const last = updated.length - 1;
+        if (updated[last]?.role === "assistant") {
+          updated[last] = {
+            ...updated[last],
+            content: `Error: ${error}`,
+            isError: true,
+          };
+        }
+        return updated;
+      });
+      setIsStreaming(false);
+      requestIdRef.current = null;
+    });
+
+    return () => {
+      offToken?.();
+      offDone?.();
+      offError?.();
+    };
   }, []);
 
   const loadConversations = async () => {
@@ -53,9 +114,30 @@ export function useChat(activeConversationId, setActiveConversationId, settings,
     return id;
   }, []);
 
+  const finalizeStream = useCallback(() => {
+    setCurrentMessages((prev) => {
+      const convId = activeIdRef.current;
+      if (convId) {
+        const title = formatConversationTitle(prev);
+        saveConversation({
+          id: convId,
+          title,
+          messages: prev,
+          updatedAt: Date.now(),
+          mode: activeModeRef.current,
+          projectId: activeProjectIdRef.current || null,
+        }).then(() => loadConversations());
+      }
+      return prev;
+    });
+    setIsStreaming(false);
+    requestIdRef.current = null;
+  }, []);
+
   const sendMessage = useCallback(
     async (content) => {
       if (!content.trim() || isStreaming) return;
+      if (!window.chat) return;
 
       let convId = activeConversationId;
       if (!convId) {
@@ -72,120 +154,48 @@ export function useChat(activeConversationId, setActiveConversationId, settings,
       streamingMessageRef.current = "";
       setIsStreaming(true);
 
-      const ollamaUrl = settings?.ollamaUrl || DEFAULT_SETTINGS.ollamaUrl;
-      const model = settings?.model || DEFAULT_SETTINGS.model;
+      const provider = settings?.provider || DEFAULT_SETTINGS.provider;
       const temperature = settings?.temperature ?? DEFAULT_SETTINGS.temperature;
+      const model =
+        provider === "ollama"
+          ? settings?.model || DEFAULT_SETTINGS.model
+          : settings?.cloudModels?.[provider] || DEFAULT_SETTINGS.cloudModels[provider];
 
-      const systemPrompt = getSystemPrompt(activeMode);
-
+      const systemPrompt = getSystemPrompt(activeMode, activeProject);
       const messagesToSend = [
         { role: "system", content: systemPrompt },
         ...newMessages.slice(0, -1),
       ];
 
-      const abort = new AbortController();
-      abortRef.current = abort;
+      const requestId = generateId();
+      requestIdRef.current = requestId;
 
-      try {
-        const response = await fetch(`${ollamaUrl}/api/chat`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model,
-            messages: messagesToSend,
-            stream: true,
-            options: { temperature },
-          }),
-          signal: abort.signal,
-        });
-
-        if (!response.ok) {
-          const errText = await response.text();
-          setCurrentMessages((prev) => {
-            const updated = [...prev];
-            const last = updated.length - 1;
-            if (updated[last]?.role === "assistant") {
-              updated[last] = {
-                ...updated[last],
-                content: `Error: ${errText}`,
-                isError: true,
-              };
-            }
-            return updated;
-          });
-          return;
-        }
-
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder("utf-8");
-        let buffer = "";
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
-
-          for (const line of lines) {
-            if (!line.trim()) continue;
-            try {
-              const parsed = JSON.parse(line);
-              if (parsed.message?.content) {
-                streamingMessageRef.current += parsed.message.content;
-                const snapshot = streamingMessageRef.current;
-                setCurrentMessages((prev) => {
-                  const updated = [...prev];
-                  const last = updated.length - 1;
-                  if (updated[last]?.role === "assistant") {
-                    updated[last] = { ...updated[last], content: snapshot };
-                  }
-                  return updated;
-                });
-              }
-            } catch {
-              // skip malformed JSON lines
-            }
-          }
-        }
-
-        // Save completed conversation
-        setCurrentMessages((prev) => {
-          const title = formatConversationTitle(prev);
-          saveConversation({
-            id: convId,
-            title,
-            messages: prev,
-            updatedAt: Date.now(),
-            mode: activeMode,
-          }).then(() => loadConversations());
-          return prev;
-        });
-      } catch (err) {
-        if (err.name === "AbortError") return;
-        setCurrentMessages((prev) => {
-          const updated = [...prev];
-          const last = updated.length - 1;
-          if (updated[last]?.role === "assistant") {
-            updated[last] = {
-              ...updated[last],
-              content: `Error: ${err.message}`,
-              isError: true,
-            };
-          }
-          return updated;
-        });
-      } finally {
-        setIsStreaming(false);
-        abortRef.current = null;
-      }
+      window.chat.send(
+        messagesToSend,
+        { provider, model, temperature },
+        requestId
+      );
     },
-    [activeConversationId, currentMessages, isStreaming, settings, setActiveConversationId, activeMode]
+    [activeConversationId, currentMessages, isStreaming, settings, setActiveConversationId, activeMode, activeProject]
   );
 
+  const moveConversation = useCallback(async (conversationId, projectId) => {
+    setConversations((prev) => {
+      const conv = prev.find((c) => c.id === conversationId);
+      if (!conv) return prev;
+      const updated = { ...conv, projectId: projectId || null, updatedAt: Date.now() };
+      saveConversation(updated).then(() => loadConversations());
+      return prev.map((c) => (c.id === conversationId ? updated : c));
+    });
+  }, []);
+
   const stopStreaming = useCallback(() => {
-    abortRef.current?.abort();
+    const requestId = requestIdRef.current;
+    if (requestId && window.chat) {
+      window.chat.abort(requestId);
+    }
+    requestIdRef.current = null;
+    setIsStreaming(false);
   }, []);
 
   const deleteConversation = useCallback(async (id) => {
@@ -203,5 +213,6 @@ export function useChat(activeConversationId, setActiveConversationId, settings,
     createNewConversation,
     loadConversation,
     deleteConversation,
+    moveConversation,
   };
 }

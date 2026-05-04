@@ -1,6 +1,10 @@
-# Scopic - Local Legal AI Assistant
+# Scopic - Legal AI Assistant
 
-Scopic is a free, private AI assistant built for lawyers and legal professionals. It runs entirely on your computer — your conversations never leave your machine.
+Scopic is a free AI assistant built for lawyers and legal professionals.
+
+- **Local-first by default** — runs Ollama on your machine, no data leaves your computer
+- **Optional cloud providers** — bring your own API key for Anthropic Claude, OpenAI, or Google Gemini
+- **One UI for all providers** — switch between local and frontier models from Settings
 
 ---
 
@@ -47,12 +51,14 @@ This downloads the AI model (~2.2 GB). Wait for it to finish before continuing.
 
 ## Features
 
-- **100% Private** — everything runs locally, no data is ever sent to the cloud
-- **Legal-focused AI** — pre-configured system prompt with IRAC reasoning, legal terminology, and jurisdiction awareness
-- **Chat history** — all conversations are saved locally and shown in the sidebar
-- **Multiple conversations** — create, switch between, and delete conversations
-- **Customizable** — change the AI model and temperature via the gear icon
-- **Works offline** — no internet connection required after the initial model download
+- **Multi-provider** — pick Ollama (local), Anthropic Claude, OpenAI, or Google Gemini
+- **Local-first** — Ollama is the default; no data leaves your machine in that mode
+- **API keys stay local** — provider keys are stored in your OS user data directory and only sent to the provider you're calling
+- **Legal-focused AI** — pre-configured system prompts (general legal Q&A and contract review with IRAC analysis)
+- **Document Vault** — upload PDFs/DOCXs and analyze them in chat
+- **Chat history** — all conversations saved locally
+- **Multiple conversations** — create, switch between, delete
+- **Auto-update** — installer updates ship via GitHub Releases
 
 ---
 
@@ -144,11 +150,26 @@ The installer is created in the `dist/` folder.
 - **Electron** — cross-platform desktop app
 - **React + Vite** — UI
 - **Tailwind CSS** — styling
-- **Ollama** — local AI model runner
-- **electron-store** — local conversation persistence
+- **Ollama** — local AI model runner (default)
+- **Anthropic / OpenAI / Gemini** — optional cloud providers (BYO key)
+- **electron-store** — local conversation + settings persistence
+
+## Using a Cloud Provider
+
+1. Open Scopic → click the gear icon (bottom-left).
+2. Pick your provider (Anthropic, OpenAI, or Gemini).
+3. Paste your API key. Keys stay on your machine — they're written to your OS user-data directory and only sent to the provider you're calling.
+4. Pick a model from the dropdown (live-fetched from the provider) and Save.
+
+You can switch providers at any time without losing chat history.
 
 ---
 
 ## License
 
-MIT — free to use, modify, and distribute.
+**AGPL-3.0-or-later.** As of v1.6.0, Scopic is licensed under the GNU Affero General Public License v3.0. The full text is in [scopic/LICENSE](scopic/LICENSE).
+
+What this means in practice:
+- You can use, modify, and distribute Scopic freely.
+- If you distribute a modified version (or run one as a network service), you must publish your source under the same license.
+- Earlier releases (v1.5.5 and prior) remain available under the MIT terms they shipped with.

@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, shell } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const Store = require("electron-store");
+const { dispatchChat, listProviderModels, pingProvider } = require("./providers");
 let mammoth = null;
 let PDFParse = null;
 try { mammoth = require("mammoth"); } catch (e) { console.error("mammoth load failed:", e); }
@@ -42,13 +43,28 @@ function findIndexHtml() {
 const store = new Store({
   defaults: {
     conversations: [],
+    projects: [],
     settings: {
+      provider: "ollama",
       ollamaUrl: "http://localhost:11434",
       model: "phi3",
       temperature: 0.7,
+      apiKeys: {
+        anthropic: "",
+        openai: "",
+        gemini: "",
+      },
+      cloudModels: {
+        anthropic: "claude-opus-4-7",
+        openai: "gpt-4o",
+        gemini: "gemini-2.5-pro",
+      },
     },
   },
 });
+
+// Track in-flight chat requests so the renderer can abort them.
+const activeChatAborts = new Map();
 
 let mainWindow = null;
 
@@ -115,106 +131,106 @@ function createWindow() {
 async function checkOllamaOnStart() {
   try {
     const settings = store.get("settings");
-    const response = await fetch(`${settings.ollamaUrl}/api/tags`, {
-      signal: AbortSignal.timeout(3000),
-    });
-    if (response.ok) {
-      mainWindow?.webContents.send("ollama:status", { connected: true });
-    } else {
-      mainWindow?.webContents.send("ollama:status", { connected: false });
+    const provider = settings.provider || "ollama";
+    const ok = await pingProvider({ provider, settings });
+    mainWindow?.webContents.send("provider:status", { provider, connected: ok });
+    // Backward compat for any older renderer paths still listening on ollama:status.
+    if (provider === "ollama") {
+      mainWindow?.webContents.send("ollama:status", { connected: ok });
     }
   } catch {
-    mainWindow?.webContents.send("ollama:status", { connected: false });
+    mainWindow?.webContents.send("provider:status", { connected: false });
   }
 }
 
-// IPC: Check if Ollama is running
+// IPC: ping a provider (presence of key for cloud, /api/tags for ollama).
+ipcMain.handle("provider:ping", async (_, { provider } = {}) => {
+  const settings = store.get("settings");
+  const target = provider || settings.provider || "ollama";
+  return pingProvider({ provider: target, settings });
+});
+
+// IPC: list models for a given provider.
+ipcMain.handle("provider:listModels", async (_, { provider } = {}) => {
+  const settings = store.get("settings");
+  const target = provider || settings.provider || "ollama";
+  return listProviderModels({ provider: target, settings });
+});
+
+// IPC (legacy): check ollama specifically.
 ipcMain.handle("ollama:check", async () => {
-  try {
-    const settings = store.get("settings");
-    const response = await fetch(`${settings.ollamaUrl}/api/tags`, {
-      signal: AbortSignal.timeout(3000),
-    });
-    return response.ok;
-  } catch {
-    return false;
-  }
+  const settings = store.get("settings");
+  return pingProvider({ provider: "ollama", settings });
 });
 
-// IPC: Get available models
+// IPC (legacy): list ollama tags.
 ipcMain.handle("ollama:tags", async () => {
-  try {
-    const settings = store.get("settings");
-    const response = await fetch(`${settings.ollamaUrl}/api/tags`, {
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!response.ok) return { models: [] };
-    const data = await response.json();
-    return data;
-  } catch {
-    return { models: [] };
-  }
+  const settings = store.get("settings");
+  const models = await listProviderModels({ provider: "ollama", settings });
+  return { models: models.map((name) => ({ name })) };
 });
 
-// IPC: Streaming chat
-ipcMain.on("ollama:chat", async (event, { messages, options, requestId }) => {
-  try {
-    const settings = store.get("settings");
-    const model = options?.model || settings.model;
-    const temperature = options?.temperature ?? settings.temperature;
+// IPC: Unified streaming chat across providers.
+ipcMain.on("chat:send", async (event, { messages, options, requestId }) => {
+  const settings = store.get("settings");
+  const provider = options?.provider || settings.provider || "ollama";
+  const temperature = options?.temperature ?? settings.temperature;
+  const model =
+    options?.model ||
+    (provider === "ollama" ? settings.model : settings.cloudModels?.[provider]);
 
-    const response = await fetch(`${settings.ollamaUrl}/api/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model,
-        messages,
-        stream: true,
-        options: { temperature },
-      }),
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      event.sender.send("chat:error", { requestId, error: errText });
-      return;
-    }
-
-    const reader = response.body;
-    const decoder = new TextDecoder("utf-8");
-    let buffer = "";
-
-    for await (const chunk of reader) {
-      buffer += decoder.decode(chunk, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || "";
-
-      for (const line of lines) {
-        if (!line.trim()) continue;
-        try {
-          const parsed = JSON.parse(line);
-          if (parsed.message?.content) {
-            event.sender.send("chat:token", {
-              requestId,
-              token: parsed.message.content,
-            });
-          }
-          if (parsed.done) {
-            event.sender.send("chat:done", { requestId });
-            return;
-          }
-        } catch {
-          // skip malformed JSON lines
-        }
-      }
-    }
-
-    event.sender.send("chat:done", { requestId });
-  } catch (err) {
+  if (!model) {
     event.sender.send("chat:error", {
       requestId,
-      error: err.message || "Unknown error",
+      error: `No model configured for ${provider}. Open Settings and pick one.`,
     });
+    return;
+  }
+
+  const abort = new AbortController();
+  activeChatAborts.set(requestId, abort);
+
+  try {
+    await dispatchChat({
+      provider,
+      settings,
+      model,
+      temperature,
+      messages,
+      signal: abort.signal,
+      onToken: (token) => {
+        event.sender.send("chat:token", { requestId, token });
+      },
+    });
+    event.sender.send("chat:done", { requestId });
+  } catch (err) {
+    if (err?.name === "AbortError") {
+      event.sender.send("chat:done", { requestId, aborted: true });
+    } else {
+      event.sender.send("chat:error", {
+        requestId,
+        error: err?.message || "Unknown error",
+      });
+    }
+  } finally {
+    activeChatAborts.delete(requestId);
+  }
+});
+
+// Legacy alias so older renderer builds keep working.
+ipcMain.on("ollama:chat", (event, payload) => {
+  ipcMain.emit("chat:send", event, {
+    ...payload,
+    options: { ...(payload?.options || {}), provider: "ollama" },
+  });
+});
+
+// IPC: abort an in-flight chat.
+ipcMain.on("chat:abort", (_, { requestId } = {}) => {
+  const abort = activeChatAborts.get(requestId);
+  if (abort) {
+    abort.abort();
+    activeChatAborts.delete(requestId);
   }
 });
 
@@ -240,6 +256,37 @@ ipcMain.handle("store:deleteConversation", (_, conversationId) => {
   store.set(
     "conversations",
     conversations.filter((c) => c.id !== conversationId)
+  );
+  return true;
+});
+
+// IPC: Store — projects
+ipcMain.handle("store:getProjects", () => {
+  return store.get("projects", []);
+});
+
+ipcMain.handle("store:saveProject", (_, project) => {
+  const projects = store.get("projects", []);
+  const idx = projects.findIndex((p) => p.id === project.id);
+  if (idx >= 0) {
+    projects[idx] = { ...projects[idx], ...project, updatedAt: Date.now() };
+  } else {
+    projects.unshift({ ...project, createdAt: Date.now(), updatedAt: Date.now() });
+  }
+  store.set("projects", projects);
+  return projects;
+});
+
+ipcMain.handle("store:deleteProject", (_, projectId) => {
+  const projects = store.get("projects", []);
+  store.set("projects", projects.filter((p) => p.id !== projectId));
+  // Detach conversations from the deleted project (don't delete them).
+  const conversations = store.get("conversations", []);
+  store.set(
+    "conversations",
+    conversations.map((c) =>
+      c.projectId === projectId ? { ...c, projectId: null } : c
+    )
   );
   return true;
 });
@@ -305,7 +352,7 @@ ipcMain.on("updater:install", () => {
   autoUpdater.quitAndInstall();
 });
 
-// IPC: File parsing (PDF, DOCX)
+// IPC: File parsing (PDF, DOCX, CSV/TSV)
 ipcMain.handle("file:parse", async (_, { buffer, filename }) => {
   const ext = path.extname(filename).toLowerCase();
   try {
@@ -328,6 +375,13 @@ ipcMain.handle("file:parse", async (_, { buffer, filename }) => {
       } finally {
         try { await parser.destroy(); } catch {}
       }
+    }
+    if (ext === ".csv" || ext === ".tsv") {
+      // Decode as UTF-8 and lightly normalize so the model sees the table cleanly.
+      const raw = buf.toString("utf-8");
+      // Strip BOM if present.
+      const text = raw.replace(/^﻿/, "");
+      return { text, error: null };
     }
     return { text: null, error: "Unsupported format" };
   } catch (err) {

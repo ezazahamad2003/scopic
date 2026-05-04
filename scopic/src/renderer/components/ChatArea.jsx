@@ -17,6 +17,7 @@ export default function ChatArea({
   conversationId,
   activeMode,
   onSetMode,
+  provider,
 }) {
   const bottomRef = useRef(null);
 
@@ -83,6 +84,7 @@ export default function ChatArea({
         isStreaming={isStreaming}
         connected={connected}
         activeMode={activeMode}
+        provider={provider}
       />
     </main>
   );

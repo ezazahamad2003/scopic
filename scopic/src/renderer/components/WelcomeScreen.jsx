@@ -1,4 +1,5 @@
 import React from "react";
+import { WORKFLOWS } from "../utils/constants.js";
 
 const TRENDING_QUESTIONS = [
   "Should I incorporate in Delaware or my home state?",
@@ -8,7 +9,7 @@ const TRENDING_QUESTIONS = [
 
 export default function WelcomeScreen({ onSuggestion, onSetMode }) {
   return (
-    <div className="flex flex-col items-center justify-center h-full px-8 select-none">
+    <div className="flex flex-col items-center justify-start h-full px-8 pt-10 pb-12 overflow-y-auto select-none">
       <h1
         className="text-3xl font-semibold mb-2 text-center"
         style={{ color: "#F0F4FF" }}
@@ -84,6 +85,47 @@ export default function WelcomeScreen({ onSuggestion, onSetMode }) {
             legal topic
           </div>
         </button>
+      </div>
+
+      {/* Workflows gallery */}
+      <div className="w-full max-w-2xl mb-8">
+        <div
+          className="text-xs font-semibold tracking-widest mb-3 uppercase"
+          style={{ color: "#4A5568" }}
+        >
+          Workflows
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {WORKFLOWS.map((wf) => (
+            <button
+              key={wf.id}
+              onClick={() => onSuggestion(wf.prompt)}
+              className="text-left p-3 rounded-xl transition-all duration-150"
+              style={{
+                background: "#0F1117",
+                border: "1px solid #1E2535",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = "#C9A55C44";
+                e.currentTarget.style.background = "#141820";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "#1E2535";
+                e.currentTarget.style.background = "#0F1117";
+              }}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-base">{wf.icon}</span>
+                <span className="text-sm font-medium" style={{ color: "#E2E8F0" }}>
+                  {wf.title}
+                </span>
+              </div>
+              <div className="text-xs leading-snug" style={{ color: "#6B7280" }}>
+                {wf.blurb}
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Trending questions */}

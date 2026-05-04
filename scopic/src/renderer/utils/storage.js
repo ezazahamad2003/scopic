@@ -17,6 +17,25 @@ export async function deleteConversation(id) {
   }
 }
 
+export async function getProjects() {
+  if (window.store) {
+    return await window.store.getProjects();
+  }
+  return [];
+}
+
+export async function saveProject(project) {
+  if (window.store) {
+    return await window.store.saveProject(project);
+  }
+}
+
+export async function deleteProject(id) {
+  if (window.store) {
+    return await window.store.deleteProject(id);
+  }
+}
+
 export async function getSettings() {
   if (window.store) {
     return await window.store.getSettings();
