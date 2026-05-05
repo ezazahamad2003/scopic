@@ -5,8 +5,10 @@ const Store = require("electron-store");
 const { dispatchChat, listProviderModels, pingProvider } = require("./providers");
 let mammoth = null;
 let PDFParse = null;
+let ExcelJS = null;
 try { mammoth = require("mammoth"); } catch (e) { console.error("mammoth load failed:", e); }
 try { ({ PDFParse } = require("pdf-parse")); } catch (e) { console.error("pdf-parse load failed:", e); }
+try { ExcelJS = require("exceljs"); } catch (e) { console.error("exceljs load failed:", e); }
 let autoUpdater = null;
 try {
   autoUpdater = require("electron-updater").autoUpdater;
@@ -382,6 +384,35 @@ ipcMain.handle("file:parse", async (_, { buffer, filename }) => {
       // Strip BOM if present.
       const text = raw.replace(/^﻿/, "");
       return { text, error: null };
+    }
+    if (ext === ".xlsx" || ext === ".xls") {
+      if (!ExcelJS) return { text: null, error: "Spreadsheet parser unavailable" };
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(buf);
+      const parts = [];
+      workbook.eachSheet((sheet) => {
+        parts.push(`# Sheet: ${sheet.name}`);
+        const rows = [];
+        sheet.eachRow({ includeEmpty: false }, (row) => {
+          const cells = [];
+          row.eachCell({ includeEmpty: false }, (cell) => {
+            const v = cell.value;
+            if (v == null) { cells.push(""); return; }
+            if (typeof v === "object") {
+              if (v.text) cells.push(String(v.text));
+              else if (v.result != null) cells.push(String(v.result));
+              else if (v.richText) cells.push(v.richText.map((r) => r.text).join(""));
+              else cells.push(JSON.stringify(v));
+            } else {
+              cells.push(String(v));
+            }
+          });
+          rows.push(cells.join("\t"));
+        });
+        parts.push(rows.join("\n"));
+        parts.push("");
+      });
+      return { text: parts.join("\n").trim(), error: null };
     }
     return { text: null, error: "Unsupported format" };
   } catch (err) {

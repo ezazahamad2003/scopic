@@ -1,4 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+
+const ACCEPT_ATTR = [
+  ".pdf", ".docx", ".txt", ".md", ".csv", ".tsv", ".xlsx", ".xls",
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "text/plain", "text/csv",
+].join(",");
+
+const MAX_DOC_CHARS = 12000;
 
 // Modal for creating or editing a project (case / matter / client).
 // `project` prop is the existing project (edit mode) or null (create mode).
@@ -9,7 +19,10 @@ export default function ProjectModal({ project, onSave, onDelete, onClose }) {
     name: project?.name || "",
     description: project?.description || "",
     color: project?.color || COLORS[0],
+    documents: project?.documents || [],
   });
+  const fileInputRef = useRef(null);
+  const [parsing, setParsing] = useState(null);
 
   useEffect(() => {
     setForm({
@@ -17,6 +30,7 @@ export default function ProjectModal({ project, onSave, onDelete, onClose }) {
       name: project?.name || "",
       description: project?.description || "",
       color: project?.color || COLORS[0],
+      documents: project?.documents || [],
     });
   }, [project]);
 
@@ -28,6 +42,54 @@ export default function ProjectModal({ project, onSave, onDelete, onClose }) {
       name: form.name.trim(),
       description: form.description.trim(),
     });
+  };
+
+  const handleAddDocument = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!window.fileParser) return;
+    setParsing(file.name);
+    try {
+      const ext = file.name.toLowerCase().slice(file.name.lastIndexOf("."));
+      let text = "";
+      if ([".pdf", ".docx", ".csv", ".tsv", ".xlsx", ".xls"].includes(ext)) {
+        const buf = await file.arrayBuffer();
+        const result = await window.fileParser.parse(buf, file.name);
+        if (result?.error) throw new Error(result.error);
+        text = result?.text || "";
+      } else {
+        text = await file.text();
+      }
+      const truncated = text.length > MAX_DOC_CHARS
+        ? text.slice(0, MAX_DOC_CHARS) + "\n\n[…truncated for context window…]"
+        : text;
+      const doc = {
+        id: `doc-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        name: file.name,
+        text: truncated,
+        sizeBytes: file.size,
+        truncated: text.length > MAX_DOC_CHARS,
+        addedAt: Date.now(),
+      };
+      setForm((f) => ({ ...f, documents: [...f.documents, doc] }));
+    } catch (err) {
+      // Surface a soft error inside the modal.
+      const errDoc = {
+        id: `doc-err-${Date.now()}`,
+        name: file.name,
+        text: "",
+        error: err?.message || "Failed to parse",
+        addedAt: Date.now(),
+      };
+      setForm((f) => ({ ...f, documents: [...f.documents, errDoc] }));
+    } finally {
+      setParsing(null);
+    }
+  };
+
+  const handleRemoveDocument = (id) => {
+    setForm((f) => ({ ...f, documents: f.documents.filter((d) => d.id !== id) }));
   };
 
   const handleBackdrop = (e) => { if (e.target === e.currentTarget) onClose(); };
@@ -110,6 +172,64 @@ export default function ProjectModal({ project, onSave, onDelete, onClose }) {
                 />
               ))}
             </div>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                Documents ({form.documents.length})
+              </label>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={Boolean(parsing)}
+                className="text-xs px-2 py-1 rounded transition-colors disabled:opacity-50"
+                style={{ background: "#0F1117", border: "1px solid #2A3347", color: "#C9A55C" }}
+              >
+                {parsing ? `Parsing ${parsing}…` : "+ Add"}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept={ACCEPT_ATTR}
+                onChange={handleAddDocument}
+                className="hidden"
+              />
+            </div>
+            {form.documents.length === 0 ? (
+              <p className="text-xs text-gray-600">
+                Pin PDFs, DOCXs, or spreadsheets to this project. Their text gets included in every chat in this project.
+              </p>
+            ) : (
+              <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                {form.documents.map((doc) => (
+                  <div
+                    key={doc.id}
+                    className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs"
+                    style={{
+                      background: doc.error ? "#2A1010" : "#0F1117",
+                      border: `1px solid ${doc.error ? "#6b1010" : "#2A3347"}`,
+                      color: doc.error ? "#EF4444" : "#E8E8E8",
+                    }}
+                  >
+                    <span className="truncate flex-1">{doc.name}</span>
+                    {doc.error ? (
+                      <span className="text-[10px]" style={{ color: "#EF4444" }}>{doc.error}</span>
+                    ) : doc.truncated ? (
+                      <span className="text-[10px]" style={{ color: "#6B7280" }} title={`${doc.sizeBytes || 0} bytes; truncated for context`}>truncated</span>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveDocument(doc.id)}
+                      className="text-gray-500 hover:text-red-400 px-1"
+                      title="Remove"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

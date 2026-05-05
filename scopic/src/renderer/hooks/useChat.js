@@ -12,12 +12,47 @@ import {
   DEFAULT_SETTINGS,
 } from "../utils/constants.js";
 
+// Hard cap on total project-document text injected into the system prompt.
+// Keeps us under cloud-provider context limits even with long docs pinned.
+const MAX_TOTAL_DOC_CHARS = 30000;
+
 function getSystemPrompt(mode, project) {
   const base = mode === "document_review" ? CONTRACT_REVIEW_SYSTEM_PROMPT : LEGAL_SYSTEM_PROMPT;
-  if (!project || !project.description?.trim()) return base;
-  const projectBlock =
-    `## ACTIVE PROJECT CONTEXT\n\nProject: ${project.name}\n\n${project.description.trim()}\n\nKeep this context in mind for all responses in this project.`;
-  return `${projectBlock}\n\n---\n\n${base}`;
+  if (!project) return base;
+
+  const hasDescription = Boolean(project.description?.trim());
+  const docs = (project.documents || []).filter((d) => d.text && !d.error);
+  if (!hasDescription && docs.length === 0) return base;
+
+  const parts = [];
+  parts.push(`## ACTIVE PROJECT: ${project.name}`);
+  if (hasDescription) {
+    parts.push("");
+    parts.push("### Context");
+    parts.push(project.description.trim());
+  }
+  if (docs.length > 0) {
+    parts.push("");
+    parts.push("### Pinned Documents");
+    let used = 0;
+    for (const doc of docs) {
+      const remaining = MAX_TOTAL_DOC_CHARS - used;
+      if (remaining <= 200) break;
+      const text = doc.text.length > remaining
+        ? doc.text.slice(0, remaining) + "\n\n[…truncated…]"
+        : doc.text;
+      parts.push("");
+      parts.push(`#### ${doc.name}`);
+      parts.push(text);
+      used += text.length;
+    }
+  }
+  parts.push("");
+  parts.push("Keep the above project context in mind for all responses.");
+  parts.push("");
+  parts.push("---");
+  parts.push("");
+  return `${parts.join("\n")}${base}`;
 }
 
 export function useChat(activeConversationId, setActiveConversationId, settings, activeMode, activeProject, activeProjectId) {

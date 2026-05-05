@@ -4,15 +4,18 @@ import ChatArea from "./components/ChatArea.jsx";
 import SettingsModal from "./components/SettingsModal.jsx";
 import DocumentVaultModal from "./components/DocumentVaultModal.jsx";
 import ProjectModal from "./components/ProjectModal.jsx";
+import WorkflowRunner from "./components/WorkflowRunner.jsx";
 import UpdateBanner from "./components/UpdateBanner.jsx";
 import { useOllama } from "./hooks/useOllama.js";
 import { useChat } from "./hooks/useChat.js";
 import { useProjects } from "./hooks/useProjects.js";
+import { saveConversation, generateId } from "./utils/storage.js";
 
 export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [vaultOpen, setVaultOpen] = useState(false);
   const [projectModalState, setProjectModalState] = useState({ open: false, project: null });
+  const [activePipeline, setActivePipeline] = useState(null);
   const [activeConversationId, setActiveConversationId] = useState(null);
   const [activeProjectId, setActiveProjectId] = useState(null);
   const [activeMode, setActiveMode] = useState("general");
@@ -111,6 +114,26 @@ export default function App() {
     setActiveProjectId((prev) => (prev === id ? null : id));
   };
 
+  const handleRunPipeline = (pipeline) => {
+    setActivePipeline(pipeline);
+  };
+
+  const handleSavePipelineAsConversation = async ({ title, messages }) => {
+    const id = generateId();
+    await saveConversation({
+      id,
+      title,
+      messages,
+      updatedAt: Date.now(),
+      mode: "general",
+      projectId: activeProjectId || null,
+    });
+    setActivePipeline(null);
+    setActiveMode("general");
+    setActiveConversationId(id);
+    loadConversation(id);
+  };
+
   return (
     <div
       className="flex h-screen w-screen overflow-hidden select-none"
@@ -175,6 +198,7 @@ export default function App() {
           onSetMode={handleSetMode}
           provider={settings?.provider || "ollama"}
           activeProject={activeProject}
+          onRunPipeline={handleRunPipeline}
         />
       </div>
 
@@ -206,6 +230,15 @@ export default function App() {
           onSave={handleSaveProject}
           onDelete={handleDeleteProject}
           onClose={() => setProjectModalState({ open: false, project: null })}
+        />
+      )}
+
+      {activePipeline && (
+        <WorkflowRunner
+          pipeline={activePipeline}
+          settings={settings}
+          onClose={() => setActivePipeline(null)}
+          onSaveAsConversation={handleSavePipelineAsConversation}
         />
       )}
 

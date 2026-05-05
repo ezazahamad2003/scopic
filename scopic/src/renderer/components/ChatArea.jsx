@@ -18,6 +18,7 @@ export default function ChatArea({
   activeMode,
   onSetMode,
   provider,
+  onRunPipeline,
 }) {
   const bottomRef = useRef(null);
 
@@ -57,7 +58,7 @@ export default function ChatArea({
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto">
         {showWelcome ? (
-          <WelcomeScreen onSuggestion={onSend} onSetMode={onSetMode} />
+          <WelcomeScreen onSuggestion={onSend} onSetMode={onSetMode} onRunPipeline={onRunPipeline} />
         ) : (
           <div className="max-w-3xl mx-auto px-6 py-6">
             {messages.map((msg, idx) => {

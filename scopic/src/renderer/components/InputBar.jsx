@@ -5,13 +5,16 @@ const ACCEPTED_TEXT_TYPES = [
   ".html", ".css", ".py", ".xml", ".yaml", ".yml",
 ];
 // Tabular and rich-doc files go through the main-process parser so we
-// always serve the model clean text (and so xlsx can be added later).
-const ACCEPTED_BINARY_TYPES = [".pdf", ".docx", ".csv", ".tsv"];
+// always serve the model clean text.
+const ACCEPTED_BINARY_TYPES = [".pdf", ".docx", ".csv", ".tsv", ".xlsx", ".xls"];
 const ALL_ACCEPTED_TYPES = [...ACCEPTED_TEXT_TYPES, ...ACCEPTED_BINARY_TYPES];
 const ACCEPT_ATTR = [
   ...ALL_ACCEPTED_TYPES,
   "application/pdf",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-excel",
+  "text/csv",
   "text/plain",
 ].join(",");
 

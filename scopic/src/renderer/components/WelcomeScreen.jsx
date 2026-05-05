@@ -1,5 +1,5 @@
 import React from "react";
-import { WORKFLOWS } from "../utils/constants.js";
+import { WORKFLOWS, WORKFLOW_PIPELINES } from "../utils/constants.js";
 
 const TRENDING_QUESTIONS = [
   "Should I incorporate in Delaware or my home state?",
@@ -7,7 +7,7 @@ const TRENDING_QUESTIONS = [
   "How do I protect my IP before raising capital?",
 ];
 
-export default function WelcomeScreen({ onSuggestion, onSetMode }) {
+export default function WelcomeScreen({ onSuggestion, onSetMode, onRunPipeline }) {
   return (
     <div className="flex flex-col items-center justify-start h-full px-8 pt-10 pb-12 overflow-y-auto select-none">
       <h1
@@ -86,6 +86,50 @@ export default function WelcomeScreen({ onSuggestion, onSetMode }) {
           </div>
         </button>
       </div>
+
+      {/* Pipelines (multi-step) */}
+      {onRunPipeline && WORKFLOW_PIPELINES?.length > 0 && (
+        <div className="w-full max-w-2xl mb-8">
+          <div
+            className="text-xs font-semibold tracking-widest mb-3 uppercase"
+            style={{ color: "#4A5568" }}
+          >
+            Pipelines · multi-step
+          </div>
+          <div className="grid grid-cols-1 gap-2">
+            {WORKFLOW_PIPELINES.map((pl) => (
+              <button
+                key={pl.id}
+                onClick={() => onRunPipeline(pl)}
+                className="text-left p-3 rounded-xl transition-all duration-150 flex items-center gap-3"
+                style={{
+                  background: "#0F1726",
+                  border: "1px solid #1E3060",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "#3A5A9F";
+                  e.currentTarget.style.background = "#13203A";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "#1E3060";
+                  e.currentTarget.style.background = "#0F1726";
+                }}
+              >
+                <span className="text-xl">{pl.icon}</span>
+                <div className="flex-1">
+                  <div className="text-sm font-medium" style={{ color: "#7BA4FF" }}>
+                    {pl.title}
+                  </div>
+                  <div className="text-xs leading-snug mt-0.5" style={{ color: "#6B7280" }}>
+                    {pl.blurb}
+                  </div>
+                </div>
+                <span className="text-xs" style={{ color: "#7BA4FF" }}>Run →</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Workflows gallery */}
       <div className="w-full max-w-2xl mb-8">

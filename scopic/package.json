@@ -1,6 +1,6 @@
 {
   "name": "scopic",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "Scopic - Legal AI assistant. Local-first via Ollama, with optional Anthropic/OpenAI/Gemini support.",
   "main": "src/main/index.js",
   "author": "Scopic",
@@ -17,6 +17,7 @@
   "dependencies": {
     "electron-store": "^8.2.0",
     "electron-updater": "^6.8.3",
+    "exceljs": "^4.4.0",
     "mammoth": "^1.12.0",
     "pdf-parse": "^2.4.5"
   },

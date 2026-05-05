@@ -267,3 +267,115 @@ Term sheet:
 [paste here]`,
   },
 ];
+
+// Multi-step pipelines run by the WorkflowRunner. Each step's prompt can
+// reference user inputs as {{inputId}} and previous step outputs as
+// {{stepId_output}}. Steps run sequentially; later steps see all prior
+// outputs.
+export const WORKFLOW_PIPELINES = [
+  {
+    id: "contract-pipeline",
+    icon: "📑",
+    title: "Full Contract Review Pipeline",
+    blurb: "3 steps: extract terms · identify risks · propose redlines.",
+    inputs: [
+      { id: "contract", label: "Contract text", placeholder: "Paste the full contract here…", multiline: true },
+    ],
+    steps: [
+      {
+        id: "extract",
+        title: "Extract material terms",
+        prompt: `Extract a clean, structured inventory of the material terms in this contract. For each term include: section reference, term name, key parameters, and a one-line plain-English summary. No risk analysis at this stage — just a faithful catalog.
+
+Contract:
+{{contract}}`,
+      },
+      {
+        id: "risks",
+        title: "Identify top 5 risks",
+        prompt: `Given the inventory below, identify the top 5 material risks from the founder's / company's perspective. For each risk: cite the clause, explain why it's dangerous, score severity High / Medium, and note the realistic worst case.
+
+Term inventory:
+{{extract_output}}`,
+      },
+      {
+        id: "redlines",
+        title: "Propose founder-favorable redlines",
+        prompt: `For each of the 5 risks above, propose a founder-favorable but commercially reasonable redline. Output as a markdown table with columns: Risk · Original clause · Proposed replacement · Negotiation rationale.
+
+Risks:
+{{risks_output}}`,
+      },
+    ],
+  },
+  {
+    id: "litigation-prep",
+    icon: "⚖️",
+    title: "Litigation Prep Pipeline",
+    blurb: "3 steps: analyze facts · identify causes of action · draft complaint outline.",
+    inputs: [
+      { id: "facts", label: "Fact pattern", placeholder: "What happened, who's involved, key dates, evidence…", multiline: true },
+      { id: "jurisdiction", label: "Jurisdiction", placeholder: "e.g., California state court, SDNY federal" },
+    ],
+    steps: [
+      {
+        id: "analysis",
+        title: "IRAC the fact pattern",
+        prompt: `Apply IRAC to the following facts in the context of {{jurisdiction}}. Identify the core legal issues, the controlling rules, the application to these facts, and a tentative conclusion. Cite landmark cases where relevant.
+
+Facts:
+{{facts}}`,
+      },
+      {
+        id: "causes",
+        title: "Enumerate causes of action",
+        prompt: `Based on the analysis below, list every plausible cause of action the plaintiff could bring. For each: legal basis, the elements, evidence needed for each element, and a strength score 1–10 with reasoning.
+
+Analysis:
+{{analysis_output}}`,
+      },
+      {
+        id: "complaint",
+        title: "Draft complaint outline",
+        prompt: `Draft a structured outline of a complaint built on the strongest 2–3 causes of action above. Include: caption, parties, jurisdiction & venue statement, numbered factual allegations, each cause of action with its elements applied, and a prayer for relief.
+
+Causes of action:
+{{causes_output}}`,
+      },
+    ],
+  },
+  {
+    id: "diligence-pipeline",
+    icon: "🔍",
+    title: "Pre-Investment Diligence Pipeline",
+    blurb: "3 steps: IP audit · corporate audit · prioritized red-flag list.",
+    inputs: [
+      { id: "company", label: "Company name", placeholder: "Acme Inc." },
+      { id: "stage", label: "Stage", placeholder: "Pre-seed / Seed / Series A" },
+      { id: "industry", label: "Industry / business model", placeholder: "B2B SaaS, fintech, marketplace…" },
+    ],
+    steps: [
+      {
+        id: "ip",
+        title: "IP diligence checklist",
+        prompt: `Run a pre-funding IP diligence checklist for {{company}}, a {{stage}} {{industry}} company. Cover founder/employee IP assignments, contractor work-for-hire, open-source license exposure, trademark posture, patent considerations, trade-secret hygiene. For each area: the standard investor question, the evidence the company should have ready, and the common pitfall to flag.`,
+      },
+      {
+        id: "corporate",
+        title: "Corporate diligence checklist",
+        prompt: `Run a corporate diligence checklist for {{company}} ({{stage}}, {{industry}}). Cover formation & good standing, cap table cleanliness, board composition, prior financings, regulatory licensing, material contracts, related-party arrangements, threatened or pending litigation. For each area: the investor question and what to verify.`,
+      },
+      {
+        id: "redflags",
+        title: "Prioritized red-flag list",
+        prompt: `Synthesize the IP and corporate findings below into a top-10 red-flag list ranked by severity. For each red flag: what it is in one sentence, why an investor cares, and the mitigation path the company should propose.
+
+IP findings:
+{{ip_output}}
+
+Corporate findings:
+{{corporate_output}}`,
+      },
+    ],
+  },
+];
