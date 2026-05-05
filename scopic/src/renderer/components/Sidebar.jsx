@@ -21,27 +21,31 @@ function offlineLabel(settings) {
   return `${PROVIDER_LABELS[provider] || provider} — add API key`;
 }
 
+const NAV_ITEMS = [
+  { id: "assistant", label: "Assistant", icon: ChatIcon },
+  { id: "projects", label: "Projects", icon: FolderIcon },
+  { id: "tabular", label: "Tabular Review", icon: TableIcon },
+  { id: "workflows", label: "Workflows", icon: WorkflowIcon },
+];
+
 export default function Sidebar({
   conversations,
   projects,
   activeId,
   activeProjectId,
+  activeView,
   connected,
   settings,
-  activeMode,
   onSelectConversation,
   onNewConversation,
   onDeleteConversation,
   onMoveConversation,
   onOpenSettings,
-  onSetMode,
-  onOpenDocumentVault,
-  onNewProject,
-  onEditProject,
-  onSelectProject,
+  onChangeView,
 }) {
   const [hoveredId, setHoveredId] = useState(null);
-  const [collapsed, setCollapsed] = useState(() => new Set());
+  const [collapsedProjects, setCollapsedProjects] = useState(() => new Set());
+  const [historyOpen, setHistoryOpen] = useState(true);
 
   const grouped = useMemo(() => {
     const byProject = new Map();
@@ -57,11 +61,10 @@ export default function Sidebar({
     return { byProject, ungrouped };
   }, [conversations]);
 
-  const toggleCollapsed = (projectId) => {
-    setCollapsed((prev) => {
+  const toggleProject = (id) => {
+    setCollapsedProjects((prev) => {
       const next = new Set(prev);
-      if (next.has(projectId)) next.delete(projectId);
-      else next.add(projectId);
+      if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
   };
@@ -69,221 +72,152 @@ export default function Sidebar({
   return (
     <aside
       className="flex flex-col border-r border-[#2A3347]"
-      style={{ width: 280, minWidth: 280, height: "100%", background: "#0D1117" }}
+      style={{ width: 260, minWidth: 260, height: "100%", background: "#0D1117" }}
     >
-      {/* Logo */}
+      {/* Header */}
       <div className="px-5 pt-5 pb-4 border-b border-[#2A3347]">
-        <div className="mb-4">
-          <span
-            className="text-sm font-bold tracking-widest"
-            style={{ color: "#FFFFFF", letterSpacing: "0.12em" }}
-          >
-            SCOPIC LEGAL
-          </span>
-          <p className="text-xs mt-0.5" style={{ color: "#4A5568" }}>
-            Private Beta Program
-          </p>
-        </div>
-
-        <button
-          onClick={onNewConversation}
-          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-medium transition-all duration-150"
-          style={{
-            background: "#161B27",
-            border: "1px solid #2A3347",
-            color: "#E2E8F0",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "#1E2535";
-            e.currentTarget.style.borderColor = "#C9A55C44";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "#161B27";
-            e.currentTarget.style.borderColor = "#2A3347";
-          }}
-        >
-          <span className="text-base leading-none">+</span>
-          New Chat
-        </button>
-      </div>
-
-      {/* Mode buttons */}
-      <div className="px-3 pt-3 pb-2 space-y-1">
-        <button
-          onClick={() => onSetMode("document_review")}
-          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
-          style={{
-            background: activeMode === "document_review" ? "#1E2535" : "transparent",
-            border:
-              activeMode === "document_review"
-                ? "1px solid #2A3347"
-                : "1px solid transparent",
-            color: activeMode === "document_review" ? "#E2E8F0" : "#6B7280",
-          }}
-          onMouseEnter={(e) => {
-            if (activeMode !== "document_review") {
-              e.currentTarget.style.background = "#161B27";
-              e.currentTarget.style.color = "#9AA0B4";
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (activeMode !== "document_review") {
-              e.currentTarget.style.background = "transparent";
-              e.currentTarget.style.color = "#6B7280";
-            }
-          }}
-        >
-          <span className="text-base leading-none w-5 text-center">⚖️</span>
-          Document Review
-        </button>
-
-        <button
-          onClick={onOpenDocumentVault}
-          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
-          style={{
-            background: "transparent",
-            border: "1px solid transparent",
-            color: "#6B7280",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "#161B27";
-            e.currentTarget.style.color = "#9AA0B4";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "transparent";
-            e.currentTarget.style.color = "#6B7280";
-          }}
-        >
-          <span className="text-base leading-none w-5 text-center">📁</span>
-          Document Vault
-        </button>
-      </div>
-
-      {/* Divider */}
-      <div className="mx-3 border-t border-[#1E2535]" />
-
-      {/* Projects header */}
-      <div className="px-3 pt-3 pb-1 flex items-center justify-between">
-        <span className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "#4A5568" }}>
-          Projects
+        <span className="text-sm font-bold tracking-widest" style={{ color: "#FFFFFF", letterSpacing: "0.12em" }}>
+          SCOPIC LEGAL
         </span>
-        <button
-          onClick={onNewProject}
-          className="text-xs px-1.5 py-0.5 rounded transition-colors"
-          style={{ color: "#6B7280" }}
-          title="New project"
-          onMouseEnter={(e) => { e.currentTarget.style.color = "#C9A55C"; e.currentTarget.style.background = "#161B27"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = "#6B7280"; e.currentTarget.style.background = "transparent"; }}
-        >
-          + Project
-        </button>
+        <p className="text-xs mt-0.5" style={{ color: "#4A5568" }}>
+          Private Beta Program
+        </p>
       </div>
 
-      {/* List: projects (with their convs) + ungrouped */}
-      <div className="flex-1 overflow-y-auto py-1">
-        {projects.length === 0 && conversations.length === 0 ? (
-          <div className="text-center text-xs px-4 py-8" style={{ color: "#4A5568" }}>
-            No conversations yet.
-            <br />
-            Start a new one above, or create a project.
-          </div>
-        ) : null}
-
-        {projects.map((proj) => {
-          const convs = grouped.byProject.get(proj.id) || [];
-          const isCollapsed = collapsed.has(proj.id);
-          const isActiveProj = activeProjectId === proj.id;
+      {/* Top-level section nav */}
+      <nav className="px-2 pt-3 pb-2 space-y-0.5">
+        {NAV_ITEMS.map((item) => {
+          const Icon = item.icon;
+          const active = activeView === item.id;
           return (
-            <div key={proj.id} className="mb-1">
-              <div
-                className="group flex items-center gap-1.5 mx-2 px-2 py-1.5 rounded-lg cursor-pointer transition-colors"
-                style={{
-                  background: isActiveProj ? "#161B27" : "transparent",
-                  border: isActiveProj ? "1px solid #2A3347" : "1px solid transparent",
-                }}
-                onClick={() => onSelectProject?.(proj.id)}
-                onMouseEnter={(e) => {
-                  if (!isActiveProj) e.currentTarget.style.background = "#0F1726";
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActiveProj) e.currentTarget.style.background = "transparent";
-                }}
-              >
-                <button
-                  onClick={(e) => { e.stopPropagation(); toggleCollapsed(proj.id); }}
-                  className="w-4 h-4 flex items-center justify-center text-[10px]"
-                  style={{ color: "#6B7280" }}
-                >
-                  {isCollapsed ? "▶" : "▼"}
-                </button>
-                <span
-                  className="w-2 h-2 rounded-full flex-shrink-0"
-                  style={{ background: proj.color || "#C9A55C" }}
-                />
-                <span
-                  className="flex-1 truncate text-xs font-medium"
-                  style={{ color: isActiveProj ? "#E2E8F0" : "#9AA0B4" }}
-                >
-                  {proj.name}
-                </span>
-                <span className="text-[10px]" style={{ color: "#4A5568" }}>
-                  {convs.length}
-                </span>
-                <button
-                  onClick={(e) => { e.stopPropagation(); onEditProject(proj); }}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] px-1"
-                  style={{ color: "#6B7280" }}
-                  title="Edit project"
-                >
-                  ⚙
-                </button>
-              </div>
-
-              {!isCollapsed && convs.map((conv) => (
-                <ConversationRow
-                  key={conv.id}
-                  conv={conv}
-                  active={activeId === conv.id}
-                  hovered={hoveredId === conv.id}
-                  setHovered={setHoveredId}
-                  onSelect={() => onSelectConversation(conv.id)}
-                  onDelete={() => onDeleteConversation(conv.id)}
-                  onMove={onMoveConversation ? (pid) => onMoveConversation(conv.id, pid) : null}
-                  projects={projects}
-                  indent
-                />
-              ))}
-            </div>
+            <button
+              key={item.id}
+              onClick={() => onChangeView(item.id)}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150"
+              style={{
+                background: active ? "#1E2535" : "transparent",
+                border: active ? "1px solid #2A3347" : "1px solid transparent",
+                color: active ? "#E2E8F0" : "#9AA0B4",
+              }}
+              onMouseEnter={(e) => {
+                if (!active) {
+                  e.currentTarget.style.background = "#161B27";
+                  e.currentTarget.style.color = "#C8D0E0";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!active) {
+                  e.currentTarget.style.background = "transparent";
+                  e.currentTarget.style.color = "#9AA0B4";
+                }
+              }}
+            >
+              <Icon size={16} color={active ? "#C9A55C" : "currentColor"} />
+              <span>{item.label}</span>
+            </button>
           );
         })}
+      </nav>
 
-        {grouped.ungrouped.length > 0 && (
-          <>
-            {projects.length > 0 && (
-              <div className="px-3 pt-3 pb-1">
-                <span className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "#4A5568" }}>
-                  Unassigned
-                </span>
-              </div>
-            )}
-            {grouped.ungrouped.map((conv) => (
-              <ConversationRow
-                key={conv.id}
-                conv={conv}
-                active={activeId === conv.id}
-                hovered={hoveredId === conv.id}
-                setHovered={setHoveredId}
-                onSelect={() => onSelectConversation(conv.id)}
-                onDelete={() => onDeleteConversation(conv.id)}
-                onMove={onMoveConversation ? (pid) => onMoveConversation(conv.id, pid) : null}
-                projects={projects}
-              />
-            ))}
-          </>
-        )}
-      </div>
+      {/* Assistant history (only in Assistant view) */}
+      {activeView === "assistant" && (
+        <>
+          <div className="mx-3 mt-2 border-t border-[#1E2535]" />
+          <div className="px-3 pt-3 pb-1 flex items-center justify-between">
+            <button
+              onClick={() => setHistoryOpen((v) => !v)}
+              className="flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase"
+              style={{ color: "#4A5568" }}
+            >
+              <span>{historyOpen ? "▼" : "▶"}</span>
+              <span>Assistant History</span>
+            </button>
+            <button
+              onClick={onNewConversation}
+              className="text-xs px-1.5 py-0.5 rounded transition-colors"
+              style={{ color: "#6B7280" }}
+              title="New chat"
+              onMouseEnter={(e) => { e.currentTarget.style.color = "#C9A55C"; e.currentTarget.style.background = "#161B27"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = "#6B7280"; e.currentTarget.style.background = "transparent"; }}
+            >
+              + New
+            </button>
+          </div>
 
-      {/* Footer: connection + settings */}
+          {historyOpen && (
+            <div className="flex-1 overflow-y-auto py-1">
+              {conversations.length === 0 ? (
+                <div className="text-center text-xs px-4 py-6" style={{ color: "#4A5568" }}>
+                  No chats yet. Click + New above.
+                </div>
+              ) : null}
+
+              {projects.map((proj) => {
+                const convs = grouped.byProject.get(proj.id) || [];
+                if (convs.length === 0) return null;
+                const isCollapsed = collapsedProjects.has(proj.id);
+                return (
+                  <div key={proj.id} className="mb-1">
+                    <div
+                      className="group flex items-center gap-1.5 mx-2 px-2 py-1 rounded-lg cursor-pointer text-xs"
+                      onClick={() => toggleProject(proj.id)}
+                    >
+                      <span style={{ color: "#6B7280" }}>{isCollapsed ? "▶" : "▼"}</span>
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: proj.color || "#C9A55C" }} />
+                      <span className="flex-1 truncate" style={{ color: "#9AA0B4" }}>{proj.name}</span>
+                      <span style={{ color: "#4A5568" }}>{convs.length}</span>
+                    </div>
+                    {!isCollapsed && convs.map((conv) => (
+                      <ConversationRow
+                        key={conv.id}
+                        conv={conv}
+                        active={activeId === conv.id}
+                        hovered={hoveredId === conv.id}
+                        setHovered={setHoveredId}
+                        onSelect={() => onSelectConversation(conv.id)}
+                        onDelete={() => onDeleteConversation(conv.id)}
+                        onMove={onMoveConversation ? (pid) => onMoveConversation(conv.id, pid) : null}
+                        projects={projects}
+                        indent
+                      />
+                    ))}
+                  </div>
+                );
+              })}
+
+              {grouped.ungrouped.length > 0 && (
+                <>
+                  {projects.some((p) => (grouped.byProject.get(p.id) || []).length > 0) && (
+                    <div className="px-3 pt-2 pb-0.5">
+                      <span className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "#4A5568" }}>
+                        Unassigned
+                      </span>
+                    </div>
+                  )}
+                  {grouped.ungrouped.map((conv) => (
+                    <ConversationRow
+                      key={conv.id}
+                      conv={conv}
+                      active={activeId === conv.id}
+                      hovered={hoveredId === conv.id}
+                      setHovered={setHoveredId}
+                      onSelect={() => onSelectConversation(conv.id)}
+                      onDelete={() => onDeleteConversation(conv.id)}
+                      onMove={onMoveConversation ? (pid) => onMoveConversation(conv.id, pid) : null}
+                      projects={projects}
+                    />
+                  ))}
+                </>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Spacer for non-Assistant views so footer pins to bottom */}
+      {activeView !== "assistant" && <div className="flex-1" />}
+
+      {/* Footer */}
       <div className="px-3 pb-4 pt-2 border-t border-[#1E2535]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs min-w-0">
@@ -291,24 +225,16 @@ export default function Sidebar({
               className="w-1.5 h-1.5 rounded-full flex-shrink-0"
               style={{ background: connected ? "#22C55E" : "#EF4444" }}
             />
-            <span className="truncate" style={{ color: "#4A5568", maxWidth: 180 }}>
-              {connected
-                ? activeModelLabel(settings)
-                : offlineLabel(settings)}
+            <span className="truncate" style={{ color: "#4A5568", maxWidth: 170 }}>
+              {connected ? activeModelLabel(settings) : offlineLabel(settings)}
             </span>
           </div>
           <button
             onClick={onOpenSettings}
             className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors"
             style={{ color: "#4A5568" }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = "#C9A55C";
-              e.currentTarget.style.background = "#161B27";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = "#4A5568";
-              e.currentTarget.style.background = "transparent";
-            }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = "#C9A55C"; e.currentTarget.style.background = "#161B27"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = "#4A5568"; e.currentTarget.style.background = "transparent"; }}
             title="Settings"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -332,25 +258,17 @@ function ConversationRow({ conv, active, hovered, setHovered, onSelect, onDelete
     >
       <button
         onClick={onSelect}
-        className="w-full text-left px-3 py-2 rounded-lg transition-colors duration-100 text-sm"
+        className="w-full text-left px-3 py-2 rounded-lg transition-colors duration-100 text-xs"
         style={{
           background: active ? "#161B27" : "transparent",
           color: active ? "#E2E8F0" : "#6B7280",
           border: active ? "1px solid #2A3347" : "1px solid transparent",
         }}
       >
-        <div className="truncate pr-10 text-xs">{conv.title || "Untitled"}</div>
-        {conv.updatedAt && (
-          <div className="text-[10px] mt-0.5" style={{ color: "#4A5568" }}>
-            {new Date(conv.updatedAt).toLocaleDateString("en-US", {
-              month: "numeric", day: "numeric", year: "numeric",
-              hour: "numeric", minute: "2-digit",
-            })}
-          </div>
-        )}
+        <div className="truncate pr-10">{conv.title || "Untitled"}</div>
       </button>
       {hovered === conv.id && (
-        <div className="absolute right-1 top-2 flex gap-0.5">
+        <div className="absolute right-1 top-1.5 flex gap-0.5">
           {onMove && (
             <div className="relative">
               <button
@@ -402,5 +320,41 @@ function ConversationRow({ conv, active, hovered, setHovered, onSelect, onDelete
         </div>
       )}
     </div>
+  );
+}
+
+function ChatIcon({ size = 16, color = "currentColor" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  );
+}
+function FolderIcon({ size = 16, color = "currentColor" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+    </svg>
+  );
+}
+function TableIcon({ size = 16, color = "currentColor" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <line x1="3" y1="9" x2="21" y2="9" />
+      <line x1="9" y1="3" x2="9" y2="21" />
+    </svg>
+  );
+}
+function WorkflowIcon({ size = 16, color = "currentColor" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="8" y1="6" x2="21" y2="6" />
+      <line x1="8" y1="12" x2="21" y2="12" />
+      <line x1="8" y1="18" x2="21" y2="18" />
+      <circle cx="3" cy="6" r="1" />
+      <circle cx="3" cy="12" r="1" />
+      <circle cx="3" cy="18" r="1" />
+    </svg>
   );
 }
