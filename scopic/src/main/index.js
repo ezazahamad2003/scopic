@@ -378,8 +378,8 @@ ipcMain.handle("file:parse", async (_, { buffer, filename }) => {
         try { await parser.destroy(); } catch {}
       }
     }
-    if (ext === ".csv" || ext === ".tsv") {
-      // Decode as UTF-8 and lightly normalize so the model sees the table cleanly.
+    if (ext === ".csv" || ext === ".tsv" || ext === ".txt" || ext === ".md") {
+      // Decode as UTF-8 and lightly normalize so the model sees the content cleanly.
       const raw = buf.toString("utf-8");
       // Strip BOM if present.
       const text = raw.replace(/^﻿/, "");

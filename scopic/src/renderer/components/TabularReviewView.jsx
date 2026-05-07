@@ -2,11 +2,32 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { renderMarkdown } from "../utils/markdown.js";
 import { DEFAULT_SETTINGS } from "../utils/constants.js";
 
-const TABULAR_SYSTEM_PROMPT = `You are Scopic's Tabular Review assistant. The user has attached a spreadsheet or tabular dataset (e.g. transaction logs, contract registers, date schedules, party tables) and is asking questions about it.
+const TABULAR_SYSTEM_PROMPT = `You are Scopic's Tabular Review assistant. The user has attached a document or dataset — it may be a spreadsheet (CSV/TSV/XLSX), a Word document (DOCX), a PDF, or plain text — and is asking questions about it.
 
-Ground every answer in the actual data above. When you cite a value, cite the row or sheet it came from. When the user asks for an aggregate (counts, totals, ranges, outliers), compute it from what you see and show your work briefly. If a column is ambiguous, say so. If the data appears truncated, flag it. Keep responses tight — tables and bullet points beat paragraphs for tabular work.`;
+Ground every answer in the actual content above. Cite the row, sheet, page, section, or quoted phrase the value came from. For aggregates over tabular data (counts, totals, ranges, outliers) compute from what you see and briefly show your work. For prose documents, prefer bullet-point summaries with short quoted snippets over long paraphrases. If something is ambiguous, missing, or truncated, flag it explicitly. Keep responses tight — tables and bullets beat paragraphs.`;
 
-const ACCEPT_ATTR = ".csv,.tsv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv";
+// Anything our main-process file:parse handler supports, plus plain text.
+const ACCEPTED_EXTENSIONS = [
+  ".csv", ".tsv", ".xlsx", ".xls",
+  ".docx", ".pdf",
+  ".txt", ".md",
+];
+const ACCEPT_ATTR = [
+  ...ACCEPTED_EXTENSIONS,
+  "text/csv",
+  "text/plain",
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+].join(",");
+
+const PLAIN_TEXT_EXTENSIONS = new Set([".csv", ".tsv", ".txt", ".md"]);
+
+function extOf(name) {
+  const i = name.lastIndexOf(".");
+  return i === -1 ? "" : name.slice(i).toLowerCase();
+}
 
 // Dedicated page for spreadsheet/tabular data analysis. Drop a file,
 // see a preview, ask the model questions about it. Uses the unified
@@ -68,10 +89,19 @@ export default function TabularReviewView({ settings }) {
     setParsing(true);
     setError(null);
     try {
+      const ext = extOf(f.name);
+      if (!ACCEPTED_EXTENSIONS.includes(ext)) {
+        throw new Error(`Unsupported file type "${ext || f.name}". Accepted: ${ACCEPTED_EXTENSIONS.join(", ")}`);
+      }
       const buf = await f.arrayBuffer();
       const result = await window.fileParser.parse(buf, f.name);
       if (result?.error) throw new Error(result.error);
-      setFile({ name: f.name, sizeBytes: f.size, text: result?.text || "" });
+      setFile({
+        name: f.name,
+        sizeBytes: f.size,
+        text: result?.text || "",
+        kind: PLAIN_TEXT_EXTENSIONS.has(ext) ? "tabular" : "document",
+      });
       setMessages([]);
     } catch (err) {
       setError(err?.message || "Failed to parse file");
@@ -109,7 +139,8 @@ export default function TabularReviewView({ settings }) {
         ? settings?.model || DEFAULT_SETTINGS.model
         : settings?.cloudModels?.[provider] || DEFAULT_SETTINGS.cloudModels[provider];
 
-    const dataBlock = `## Attached spreadsheet: ${file.name}\n\n\`\`\`\n${file.text.slice(0, 30000)}${file.text.length > 30000 ? "\n[…truncated…]" : ""}\n\`\`\``;
+    const label = file.kind === "tabular" ? "spreadsheet" : "document";
+    const dataBlock = `## Attached ${label}: ${file.name}\n\n\`\`\`\n${file.text.slice(0, 30000)}${file.text.length > 30000 ? "\n[…truncated…]" : ""}\n\`\`\``;
 
     const requestId = `tab-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     requestIdRef.current = requestId;
@@ -140,7 +171,7 @@ export default function TabularReviewView({ settings }) {
           Tabular Review
         </h1>
         <p className="text-xs mt-0.5" style={{ color: "#6B7280" }}>
-          Drop a CSV, TSV, or XLSX. Ask questions about transactions, dates, parties, totals, anomalies.
+          Drop a Word doc, PDF, spreadsheet, or text file. Ask questions about clauses, dates, parties, totals, anomalies.
         </p>
       </div>
 
@@ -167,9 +198,11 @@ export default function TabularReviewView({ settings }) {
               <line x1="9" y1="3" x2="9" y2="21" />
             </svg>
             <div className="text-sm" style={{ color: "#E8E8E8" }}>
-              {parsing ? "Parsing…" : "Drop a spreadsheet here"}
+              {parsing ? "Parsing…" : "Drop a document or spreadsheet here"}
             </div>
-            <div className="text-xs mt-1">or click to browse — .csv, .tsv, .xlsx, .xls</div>
+            <div className="text-xs mt-1">
+              or click to browse — {ACCEPTED_EXTENSIONS.join(", ")}
+            </div>
             {error && <div className="text-xs mt-3" style={{ color: "#EF4444" }}>{error}</div>}
             <input ref={fileInputRef} type="file" accept={ACCEPT_ATTR} onChange={handleFilePick} className="hidden" />
           </div>
@@ -216,14 +249,22 @@ export default function TabularReviewView({ settings }) {
             >
               {messages.length === 0 ? (
                 <div className="text-center text-xs py-6" style={{ color: "#6B7280" }}>
-                  Ask anything about this data. Examples:
+                  Ask anything about this {file.kind === "tabular" ? "data" : "document"}. Examples:
                   <div className="mt-3 space-y-1.5 max-w-md mx-auto text-left">
-                    {[
-                      "Summarize the columns and what each row represents.",
-                      "Are there any duplicate or contradictory rows?",
-                      "What's the date range? Any gaps?",
-                      "Which entities appear most often, and in what context?",
-                    ].map((q) => (
+                    {(file.kind === "tabular"
+                      ? [
+                          "Summarize the columns and what each row represents.",
+                          "Are there any duplicate or contradictory rows?",
+                          "What's the date range? Any gaps?",
+                          "Which entities appear most often, and in what context?",
+                        ]
+                      : [
+                          "Summarize this document in 5 bullets.",
+                          "Who are the parties, and what are their core obligations?",
+                          "List every defined term and how it's defined.",
+                          "Flag any unusual, one-sided, or risky clauses.",
+                        ]
+                    ).map((q) => (
                       <button
                         key={q}
                         onClick={() => setInput(q)}
