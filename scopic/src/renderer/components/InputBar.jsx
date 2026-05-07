@@ -47,7 +47,7 @@ function readFileAsArrayBuffer(file) {
   });
 }
 
-export default function InputBar({ onSend, onStop, isStreaming, connected, activeMode, provider }) {
+export default function InputBar({ onSend, onStop, isStreaming, connected, activeMode, provider, draft, onDraftConsumed }) {
   const [value, setValue] = useState("");
   const [attachedFile, setAttachedFile] = useState(null);
   const textareaRef = useRef(null);
@@ -60,6 +60,27 @@ export default function InputBar({ onSend, onStop, isStreaming, connected, activ
         Math.min(textareaRef.current.scrollHeight, 160) + "px";
     }
   }, [value]);
+
+  // When the parent drops a workflow draft into us, prefill the textarea,
+  // focus, and select the first "[bracketed placeholder]" so the user can
+  // type over it. Then notify the parent so the draft prop clears.
+  useEffect(() => {
+    if (!draft) return;
+    setValue(draft);
+    requestAnimationFrame(() => {
+      const ta = textareaRef.current;
+      if (!ta) return;
+      ta.focus();
+      const match = draft.match(/\[[^\]]+\]/);
+      if (match && match.index != null) {
+        ta.setSelectionRange(match.index, match.index + match[0].length);
+      } else {
+        ta.setSelectionRange(draft.length, draft.length);
+      }
+      ta.scrollTop = ta.scrollHeight;
+    });
+    onDraftConsumed?.();
+  }, [draft, onDraftConsumed]);
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {

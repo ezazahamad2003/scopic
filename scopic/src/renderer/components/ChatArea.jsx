@@ -18,7 +18,12 @@ export default function ChatArea({
   activeMode,
   onSetMode,
   provider,
+  activeProject,
+  onClearProject,
   onRunPipeline,
+  onPickWorkflow,
+  draft,
+  onDraftConsumed,
 }) {
   const bottomRef = useRef(null);
 
@@ -34,6 +39,33 @@ export default function ChatArea({
       className="flex flex-col flex-1 overflow-hidden"
       style={{ background: "#0D1117" }}
     >
+      {/* Project context banner */}
+      {activeProject && (
+        <div
+          className="flex items-center justify-center gap-2 py-1.5 text-xs font-medium border-b"
+          style={{
+            background: "#1A1530",
+            borderColor: "#3A2E60",
+            color: "#B5A3FF",
+          }}
+        >
+          <span
+            className="w-2 h-2 rounded-full"
+            style={{ background: activeProject.color || "#B5A3FF" }}
+          />
+          <span>Project: {activeProject.name}</span>
+          {onClearProject && (
+            <button
+              onClick={onClearProject}
+              className="ml-2 text-xs opacity-50 hover:opacity-100 transition-opacity"
+              title="Leave project context"
+            >
+              ✕ Leave
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Mode indicator banner */}
       {modeLabel && (
         <div
@@ -58,7 +90,12 @@ export default function ChatArea({
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto">
         {showWelcome ? (
-          <WelcomeScreen onSuggestion={onSend} onSetMode={onSetMode} onRunPipeline={onRunPipeline} />
+          <WelcomeScreen
+            onSuggestion={onSend}
+            onSetMode={onSetMode}
+            onRunPipeline={onRunPipeline}
+            onPickWorkflow={onPickWorkflow}
+          />
         ) : (
           <div className="max-w-3xl mx-auto px-6 py-6">
             {messages.map((msg, idx) => {
@@ -86,6 +123,8 @@ export default function ChatArea({
         connected={connected}
         activeMode={activeMode}
         provider={provider}
+        draft={draft}
+        onDraftConsumed={onDraftConsumed}
       />
     </main>
   );

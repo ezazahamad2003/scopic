@@ -25,6 +25,7 @@ export default function App() {
   const [activeMode, setActiveMode] = useState("general");
   const [updateState, setUpdateState] = useState({ status: "none", version: null, progress: 0 });
   const [pendingPrompt, setPendingPrompt] = useState(null);
+  const [pendingDraft, setPendingDraft] = useState(null);
 
   const { connected, models, settings, saveSettings, recheckConnection } = useOllama();
   const { projects, upsertProject, deleteProject } = useProjects();
@@ -150,11 +151,15 @@ export default function App() {
     loadConversation(id);
   };
 
-  // Single-prompt workflow → Assistant view with that prompt fired off.
+  // Single-prompt workflow → Assistant view with the prompt dropped into
+  // the input as a draft (so the user can fill in placeholders like
+  // "[describe the situation]" before sending). Always opens a fresh chat.
   const handlePickWorkflow = (workflow) => {
-    setPendingPrompt(workflow.prompt);
     setActiveView("assistant");
     setActiveMode("general");
+    const id = createNewConversation();
+    setActiveConversationId(id);
+    setPendingDraft(workflow.prompt);
   };
 
   return (
@@ -219,7 +224,11 @@ export default function App() {
             onSetMode={handleSetMode}
             provider={settings?.provider || "ollama"}
             activeProject={activeProject}
+            onClearProject={() => setActiveProjectId(null)}
             onRunPipeline={handleRunPipeline}
+            onPickWorkflow={handlePickWorkflow}
+            draft={pendingDraft}
+            onDraftConsumed={() => setPendingDraft(null)}
           />
         )}
 

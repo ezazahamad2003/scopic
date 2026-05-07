@@ -7,7 +7,7 @@ const TRENDING_QUESTIONS = [
   "How do I protect my IP before raising capital?",
 ];
 
-export default function WelcomeScreen({ onSuggestion, onSetMode, onRunPipeline }) {
+export default function WelcomeScreen({ onSuggestion, onSetMode, onRunPipeline, onPickWorkflow }) {
   return (
     <div className="flex flex-col items-center justify-start h-full px-8 pt-10 pb-12 overflow-y-auto select-none">
       <h1
@@ -143,7 +143,7 @@ export default function WelcomeScreen({ onSuggestion, onSetMode, onRunPipeline }
           {WORKFLOWS.map((wf) => (
             <button
               key={wf.id}
-              onClick={() => onSuggestion(wf.prompt)}
+              onClick={() => (onPickWorkflow ? onPickWorkflow(wf) : onSuggestion(wf.prompt))}
               className="text-left p-3 rounded-xl transition-all duration-150"
               style={{
                 background: "#0F1117",
