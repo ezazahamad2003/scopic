@@ -3,6 +3,29 @@
 // All cloud providers are routed through the main process to avoid CORS
 // and to keep API keys in a single trust boundary.
 
+// Returns true when the given (provider, model) pair accepts an arbitrary
+// temperature value. Newer reasoning-class models from both OpenAI and
+// Anthropic reject anything other than the model's fixed default and we
+// must omit the field entirely. Add new families to this denylist as the
+// providers ship them.
+function supportsTemperature(provider, model) {
+  if (!model) return true;
+  const m = String(model).toLowerCase();
+  if (provider === "anthropic") {
+    // Opus 4.7+ — temperature deprecated.
+    return !/opus-4-[7-9]/.test(m) && !/opus-[5-9]/.test(m);
+  }
+  if (provider === "openai") {
+    // o-series reasoning models (o1, o3, o4...) and the GPT-5 family
+    // require the default temperature of 1; sending any value 400s.
+    if (/^o[1-9]/.test(m)) return false;
+    if (/^gpt-5/.test(m)) return false;
+    return true;
+  }
+  // Ollama and Gemini accept temperature on every model we ship today.
+  return true;
+}
+
 async function chatOllama({ url, model, temperature, messages, onToken, signal }) {
   const response = await fetch(`${url}/api/chat`, {
     method: "POST",
@@ -47,9 +70,6 @@ async function chatAnthropic({ apiKey, model, temperature, messages, onToken, si
     content: m.content,
   }));
 
-  // Opus 4.7+ deprecates the temperature parameter; older models still accept it.
-  const supportsTemperature = !/opus-4-7/.test(model);
-
   const body = {
     model,
     max_tokens: 4096,
@@ -57,7 +77,7 @@ async function chatAnthropic({ apiKey, model, temperature, messages, onToken, si
     system: sysParts.join("\n\n") || undefined,
     messages: conv,
   };
-  if (supportsTemperature) body.temperature = temperature;
+  if (supportsTemperature("anthropic", model)) body.temperature = temperature;
 
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -85,18 +105,20 @@ async function chatAnthropic({ apiKey, model, temperature, messages, onToken, si
 async function chatOpenAI({ apiKey, model, temperature, messages, onToken, signal }) {
   if (!apiKey) throw new Error("OpenAI API key not set");
 
+  const body = {
+    model,
+    messages,
+    stream: true,
+  };
+  if (supportsTemperature("openai", model)) body.temperature = temperature;
+
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
     },
-    body: JSON.stringify({
-      model,
-      messages,
-      stream: true,
-      temperature,
-    }),
+    body: JSON.stringify(body),
     signal,
   });
 
@@ -124,10 +146,10 @@ async function chatGemini({ apiKey, model, temperature, messages, onToken, signa
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse&key=${encodeURIComponent(apiKey)}`;
 
-  const body = {
-    contents,
-    generationConfig: { temperature },
-  };
+  const body = { contents };
+  if (supportsTemperature("gemini", model)) {
+    body.generationConfig = { temperature };
+  }
   if (sysParts.length) {
     body.systemInstruction = { parts: [{ text: sysParts.join("\n\n") }] };
   }
