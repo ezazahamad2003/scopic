@@ -22,7 +22,16 @@ function supportsTemperature(provider, model) {
     if (/^gpt-5/.test(m)) return false;
     return true;
   }
-  // Ollama and Gemini accept temperature on every model we ship today.
+  if (provider === "gemini") {
+    // Gemini 3+ doesn't 400, but Google's docs warn that any non-default
+    // temperature "may lead to unexpected behavior, such as looping or
+    // degraded performance, particularly in complex mathematical or
+    // reasoning tasks." Treat that as a hard skip so we don't silently
+    // ship looping output to users.
+    if (/^gemini-[3-9]/.test(m)) return false;
+    return true;
+  }
+  // Ollama accepts temperature on every model we ship today.
   return true;
 }
 
