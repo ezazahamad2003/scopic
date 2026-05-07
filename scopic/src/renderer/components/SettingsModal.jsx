@@ -6,6 +6,7 @@ export default function SettingsModal({ settings, models, onSave, onClose, updat
   const [showKey, setShowKey] = useState({ anthropic: false, openai: false, gemini: false });
   const [liveCloudModels, setLiveCloudModels] = useState({ anthropic: [], openai: [], gemini: [] });
   const [loadingModels, setLoadingModels] = useState(false);
+  const [liveOllamaModels, setLiveOllamaModels] = useState(null); // null = not yet fetched
 
   const [version, setVersion] = useState("");
   const [isPackaged, setIsPackaged] = useState(true);
@@ -38,6 +39,30 @@ export default function SettingsModal({ settings, models, onSave, onClose, updat
     }, 600);
     return () => clearTimeout(handle);
   }, [form.apiKeys.anthropic, form.apiKeys.openai, form.apiKeys.gemini]);
+
+  // Live-fetch Ollama models when the user is on (or switches to) the
+  // Local provider. The `models` prop from useOllama reflects whatever
+  // provider was active when settings loaded — if the user opens Settings
+  // while on a cloud provider and clicks "Local (Ollama)", the prop is
+  // still cloud models, so we fetch directly here.
+  useEffect(() => {
+    if (form.provider !== "ollama") return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetch(`${form.ollamaUrl}/api/tags`, {
+          signal: AbortSignal.timeout(3000),
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        if (cancelled) return;
+        setLiveOllamaModels((data?.models || []).map((m) => m.name));
+      } catch {
+        if (!cancelled) setLiveOllamaModels([]);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [form.provider, form.ollamaUrl]);
 
   const handleCheckForUpdates = async () => {
     if (!window.updater) return;
@@ -78,12 +103,21 @@ export default function SettingsModal({ settings, models, onSave, onClose, updat
   // Models for the active provider's picker.
   const providerModels = useMemo(() => {
     if (provider === "ollama") {
-      return models.length > 0 ? models : [form.model];
+      // Trust our own live-fetch over the prop, since the prop reflects
+      // whichever provider was active when the parent's useOllama last
+      // refreshed (which may have been a cloud provider).
+      if (Array.isArray(liveOllamaModels)) {
+        return liveOllamaModels.length > 0 ? liveOllamaModels : (form.model ? [form.model] : []);
+      }
+      // Pre-fetch: only trust the prop if the saved provider is also ollama;
+      // otherwise show nothing rather than leak cloud models into this picker.
+      if (settings?.provider === "ollama" && models.length > 0) return models;
+      return form.model ? [form.model] : [];
     }
     const live = liveCloudModels[provider] || [];
     if (live.length) return live;
     return DEFAULT_CLOUD_MODELS[provider] || [];
-  }, [provider, models, liveCloudModels, form.model]);
+  }, [provider, models, liveCloudModels, liveOllamaModels, form.model, settings?.provider]);
 
   const activeCloudModel = form.cloudModels?.[provider] || providerModels[0] || "";
 
@@ -161,16 +195,27 @@ export default function SettingsModal({ settings, models, onSave, onClose, updat
               />
             </Field>
 
-            <Field label="Local Model" hint="Models loaded from your Ollama installation">
+            <Field
+              label="Local Model"
+              hint={
+                liveOllamaModels === null
+                  ? "Loading models from your Ollama installation…"
+                  : liveOllamaModels.length === 0
+                    ? "Couldn't reach Ollama. Make sure it's running and the URL above is correct."
+                    : "Models loaded from your Ollama installation"
+              }
+            >
               <select
                 value={form.model}
                 onChange={(e) => setForm((f) => ({ ...f, model: e.target.value }))}
-                className="w-full px-3 py-2.5 rounded-lg text-sm outline-none appearance-none"
+                className="w-full px-3 py-2.5 rounded-lg text-sm outline-none appearance-none disabled:opacity-50"
                 style={{
                   background: "#0F1117", border: "1px solid #2A3347",
                   color: "#E8E8E8", cursor: "pointer",
                 }}
+                disabled={providerModels.length === 0}
               >
+                {providerModels.length === 0 && <option value="">(no models found)</option>}
                 {providerModels.map((m) => (
                   <option key={m} value={m}>{m}</option>
                 ))}
