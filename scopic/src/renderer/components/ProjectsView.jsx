@@ -52,21 +52,32 @@ export default function ProjectsView({
               return (
                 <div
                   key={proj.id}
-                  className="group relative rounded-xl p-4 transition-all cursor-pointer"
+                  className="group relative rounded-xl p-4 transition-all cursor-pointer overflow-hidden"
                   style={{
                     background: "#141820",
                     border: "1px solid #2A3347",
+                    boxShadow: "0 1px 0 rgba(255,255,255,0.02) inset",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "#C9A55C66";
-                    e.currentTarget.style.background = "#161B27";
+                    e.currentTarget.style.borderColor = "#C9A55C99";
+                    e.currentTarget.style.background = "#171C28";
+                    e.currentTarget.style.boxShadow = "0 8px 24px rgba(201,165,92,0.10), 0 1px 0 rgba(255,255,255,0.04) inset";
+                    e.currentTarget.style.transform = "translateY(-1px)";
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.borderColor = "#2A3347";
                     e.currentTarget.style.background = "#141820";
+                    e.currentTarget.style.boxShadow = "0 1px 0 rgba(255,255,255,0.02) inset";
+                    e.currentTarget.style.transform = "translateY(0)";
                   }}
                   onClick={() => onOpenProject(proj.id)}
                 >
+                  {/* Soft color wash from the project's own dot color */}
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute -top-10 -right-10 w-32 h-32 rounded-full blur-2xl opacity-20 group-hover:opacity-40 transition-opacity"
+                    style={{ background: proj.color || "#C9A55C" }}
+                  />
                   <div className="flex items-start gap-2.5 mb-3">
                     <span
                       className="w-2.5 h-2.5 rounded-full mt-1 flex-shrink-0"

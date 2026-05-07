@@ -7,17 +7,35 @@ const TRENDING_QUESTIONS = [
   "How do I protect my IP before raising capital?",
 ];
 
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 5) return "Working late?";
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  if (h < 22) return "Good evening";
+  return "Working late?";
+}
+
 export default function WelcomeScreen({ onSuggestion, onSetMode, onRunPipeline, onPickWorkflow }) {
   return (
-    <div className="flex flex-col items-center justify-start h-full px-8 pt-10 pb-12 overflow-y-auto select-none">
+    <div className="flex flex-col items-center justify-start h-full px-8 pt-12 pb-12 overflow-y-auto select-none">
+      <p className="text-xs font-bold tracking-[0.2em] uppercase mb-3" style={{ color: "#C9A55C" }}>
+        {getGreeting()}
+      </p>
       <h1
-        className="text-3xl font-semibold mb-2 text-center"
-        style={{ color: "#F0F4FF" }}
+        className="text-4xl font-semibold mb-3 text-center"
+        style={{
+          fontFamily: "DM Serif Display, serif",
+          background: "linear-gradient(135deg, #F0F4FF 0%, #C9A55C 60%, #A8874A 100%)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          backgroundClip: "text",
+        }}
       >
         How can I help you today?
       </h1>
       <p className="text-sm mb-10 text-center" style={{ color: "#6B7280" }}>
-        Choose a starting point or ask anything
+        Pick a starting point below — or just ask.
       </p>
 
       {/* Feature cards */}

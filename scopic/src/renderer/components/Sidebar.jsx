@@ -75,11 +75,25 @@ export default function Sidebar({
       style={{ width: 260, minWidth: 260, height: "100%", background: "#0D1117" }}
     >
       {/* Header */}
-      <div className="px-5 pt-5 pb-4 border-b border-[#2A3347]">
-        <span className="text-sm font-bold tracking-widest" style={{ color: "#FFFFFF", letterSpacing: "0.12em" }}>
+      <div className="px-5 pt-5 pb-4 border-b border-[#2A3347] relative overflow-hidden">
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -top-8 -left-6 w-24 h-24 rounded-full blur-2xl opacity-20"
+          style={{ background: "#C9A55C" }}
+        />
+        <span
+          className="relative text-sm font-bold tracking-widest"
+          style={{
+            background: "linear-gradient(135deg, #FFFFFF 0%, #C9A55C 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+            letterSpacing: "0.12em",
+          }}
+        >
           SCOPIC LEGAL
         </span>
-        <p className="text-xs mt-0.5" style={{ color: "#4A5568" }}>
+        <p className="relative text-xs mt-0.5" style={{ color: "#4A5568" }}>
           Private Beta Program
         </p>
       </div>
@@ -93,9 +107,11 @@ export default function Sidebar({
             <button
               key={item.id}
               onClick={() => onChangeView(item.id)}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150"
+              className="relative w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150"
               style={{
-                background: active ? "#1E2535" : "transparent",
+                background: active
+                  ? "linear-gradient(90deg, rgba(201,165,92,0.10), rgba(30,37,53,0.6) 60%)"
+                  : "transparent",
                 border: active ? "1px solid #2A3347" : "1px solid transparent",
                 color: active ? "#E2E8F0" : "#9AA0B4",
               }}
@@ -112,6 +128,13 @@ export default function Sidebar({
                 }
               }}
             >
+              {active && (
+                <span
+                  aria-hidden
+                  className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-r"
+                  style={{ background: "linear-gradient(180deg, #C9A55C, #A8874A)" }}
+                />
+              )}
               <Icon size={16} color={active ? "#C9A55C" : "currentColor"} />
               <span>{item.label}</span>
             </button>
