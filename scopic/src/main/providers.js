@@ -47,6 +47,18 @@ async function chatAnthropic({ apiKey, model, temperature, messages, onToken, si
     content: m.content,
   }));
 
+  // Opus 4.7+ deprecates the temperature parameter; older models still accept it.
+  const supportsTemperature = !/opus-4-7/.test(model);
+
+  const body = {
+    model,
+    max_tokens: 4096,
+    stream: true,
+    system: sysParts.join("\n\n") || undefined,
+    messages: conv,
+  };
+  if (supportsTemperature) body.temperature = temperature;
+
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -54,14 +66,7 @@ async function chatAnthropic({ apiKey, model, temperature, messages, onToken, si
       "x-api-key": apiKey,
       "anthropic-version": "2023-06-01",
     },
-    body: JSON.stringify({
-      model,
-      max_tokens: 4096,
-      temperature,
-      stream: true,
-      system: sysParts.join("\n\n") || undefined,
-      messages: conv,
-    }),
+    body: JSON.stringify(body),
     signal,
   });
 

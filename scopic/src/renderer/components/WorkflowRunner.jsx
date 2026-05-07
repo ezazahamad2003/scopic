@@ -82,7 +82,7 @@ export default function WorkflowRunner({ pipeline, settings, onClose, onSaveAsCo
     requestIdRef.current = requestId;
 
     const provider = settings?.provider || DEFAULT_SETTINGS.provider;
-    const temperature = settings?.temperature ?? DEFAULT_SETTINGS.temperature;
+    const temperature = DEFAULT_SETTINGS.temperature;
     const model =
       provider === "ollama"
         ? settings?.model || DEFAULT_SETTINGS.model

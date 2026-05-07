@@ -238,24 +238,6 @@ export default function SettingsModal({ settings, models, onSave, onClose, updat
           </div>
         )}
 
-        {/* Temperature (shared) */}
-        <div className="mt-5">
-          <label className="block text-xs font-medium text-gray-400 mb-2 uppercase tracking-wide">
-            Temperature: <span style={{ color: "#C9A55C" }}>{(form.temperature ?? 0.7).toFixed(1)}</span>
-          </label>
-          <input
-            type="range" min="0" max="1" step="0.1"
-            value={form.temperature ?? 0.7}
-            onChange={(e) => setForm((f) => ({ ...f, temperature: parseFloat(e.target.value) }))}
-            className="w-full"
-            style={{ accentColor: "#C9A55C" }}
-          />
-          <div className="flex justify-between text-xs text-gray-600 mt-1">
-            <span>Precise (0.0)</span>
-            <span>Creative (1.0)</span>
-          </div>
-        </div>
-
         {/* About & Updates */}
         <div className="mt-6 pt-5 border-t" style={{ borderColor: "#2A3347" }}>
           <label className="block text-xs font-medium text-gray-400 mb-3 uppercase tracking-wide">

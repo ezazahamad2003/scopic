@@ -63,6 +63,8 @@ export function useChat(activeConversationId, setActiveConversationId, settings,
   const activeIdRef = useRef(activeConversationId);
   const activeModeRef = useRef(activeMode);
   const activeProjectIdRef = useRef(activeProjectId);
+  const currentMessagesRef = useRef([]);
+  const activeProjectRef = useRef(activeProject);
   const requestIdRef = useRef(null);
 
   useEffect(() => {
@@ -76,6 +78,14 @@ export function useChat(activeConversationId, setActiveConversationId, settings,
   useEffect(() => {
     activeProjectIdRef.current = activeProjectId;
   }, [activeProjectId]);
+
+  useEffect(() => {
+    currentMessagesRef.current = currentMessages;
+  }, [currentMessages]);
+
+  useEffect(() => {
+    activeProjectRef.current = activeProject;
+  }, [activeProject]);
 
   useEffect(() => {
     loadConversations();
@@ -145,6 +155,8 @@ export function useChat(activeConversationId, setActiveConversationId, settings,
   const createNewConversation = useCallback(() => {
     const id = generateId();
     setCurrentMessages([]);
+    currentMessagesRef.current = [];
+    activeIdRef.current = id;
     streamingMessageRef.current = "";
     return id;
   }, []);
@@ -174,7 +186,10 @@ export function useChat(activeConversationId, setActiveConversationId, settings,
       if (!content.trim() || isStreaming) return;
       if (!window.chat) return;
 
-      let convId = activeConversationId;
+      // Always read the latest conversation/messages from refs so that
+      // callers who just created a new chat (e.g. workflow launchers using
+      // setTimeout) don't accidentally append to a stale closure's state.
+      let convId = activeIdRef.current;
       if (!convId) {
         convId = generateId();
         setActiveConversationId(convId);
@@ -183,20 +198,22 @@ export function useChat(activeConversationId, setActiveConversationId, settings,
 
       const userMessage = { role: "user", content: content.trim() };
       const assistantPlaceholder = { role: "assistant", content: "" };
-      const newMessages = [...currentMessages, userMessage, assistantPlaceholder];
+      const baseMessages = currentMessagesRef.current || [];
+      const newMessages = [...baseMessages, userMessage, assistantPlaceholder];
 
       setCurrentMessages(newMessages);
+      currentMessagesRef.current = newMessages;
       streamingMessageRef.current = "";
       setIsStreaming(true);
 
       const provider = settings?.provider || DEFAULT_SETTINGS.provider;
-      const temperature = settings?.temperature ?? DEFAULT_SETTINGS.temperature;
+      const temperature = DEFAULT_SETTINGS.temperature;
       const model =
         provider === "ollama"
           ? settings?.model || DEFAULT_SETTINGS.model
           : settings?.cloudModels?.[provider] || DEFAULT_SETTINGS.cloudModels[provider];
 
-      const systemPrompt = getSystemPrompt(activeMode, activeProject);
+      const systemPrompt = getSystemPrompt(activeModeRef.current, activeProjectRef.current);
       const messagesToSend = [
         { role: "system", content: systemPrompt },
         ...newMessages.slice(0, -1),
@@ -211,7 +228,7 @@ export function useChat(activeConversationId, setActiveConversationId, settings,
         requestId
       );
     },
-    [activeConversationId, currentMessages, isStreaming, settings, setActiveConversationId, activeMode, activeProject]
+    [isStreaming, settings, setActiveConversationId]
   );
 
   const moveConversation = useCallback(async (conversationId, projectId) => {
