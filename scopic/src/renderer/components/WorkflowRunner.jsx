@@ -82,7 +82,7 @@ export default function WorkflowRunner({ pipeline, settings, onClose, onSaveAsCo
     requestIdRef.current = requestId;
 
     const provider = settings?.provider || DEFAULT_SETTINGS.provider;
-    const temperature = DEFAULT_SETTINGS.temperature;
+    const temperature = settings?.temperature ?? DEFAULT_SETTINGS.temperature;
     const model =
       provider === "ollama"
         ? settings?.model || DEFAULT_SETTINGS.model
@@ -93,7 +93,7 @@ export default function WorkflowRunner({ pipeline, settings, onClose, onSaveAsCo
         { role: "system", content: LEGAL_SYSTEM_PROMPT },
         { role: "user", content: prompt },
       ],
-      { provider, model, temperature },
+      { provider, model, temperature, rawMessages: true, mode: "workflow" },
       requestId
     );
   }, [pipeline, settings, substitute]);

@@ -207,6 +207,33 @@ ipcMain.on("chat:send", async (event, payload) => {
     return;
   }
 
+  const abort = new AbortController();
+  activeChatAborts.set(requestId, abort);
+
+  if (options?.rawMessages) {
+    try {
+      await dispatchChat({
+        provider,
+        settings,
+        model,
+        temperature,
+        messages: incomingMessages || [],
+        signal: abort.signal,
+        onToken: (token) => event.sender.send("chat:token", { requestId, token }),
+      });
+      event.sender.send("chat:done", { requestId, mode: options?.mode || "raw" });
+    } catch (err) {
+      if (err?.name === "AbortError") {
+        event.sender.send("chat:done", { requestId, aborted: true });
+      } else {
+        event.sender.send("chat:error", { requestId, error: err?.message || "Unknown error" });
+      }
+    } finally {
+      activeChatAborts.delete(requestId);
+    }
+    return;
+  }
+
   // Hydrate project (with fresh document membership) from the DB.
   const project = options?.projectId
     ? db.projects.get(options.projectId)
@@ -249,9 +276,6 @@ ipcMain.on("chat:send", async (event, payload) => {
       citations: assembled.citations,
     });
   }
-
-  const abort = new AbortController();
-  activeChatAborts.set(requestId, abort);
 
   try {
     await dispatchChat({

@@ -155,7 +155,7 @@ export function useChat(activeConversationId, setActiveConversationId, settings,
       setIsStreaming(true);
 
       const provider = settings?.provider || DEFAULT_SETTINGS.provider;
-      const temperature = DEFAULT_SETTINGS.temperature;
+      const temperature = settings?.temperature ?? DEFAULT_SETTINGS.temperature;
       const model =
         provider === "ollama"
           ? settings?.model || DEFAULT_SETTINGS.model

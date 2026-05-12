@@ -10,6 +10,7 @@ Ground every answer in the actual content above. Cite the row, sheet, page, sect
 const ACCEPTED_EXTENSIONS = [
   ".csv", ".tsv", ".xlsx", ".xls",
   ".docx", ".pdf",
+  ".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".webp",
   ".txt", ".md",
 ];
 const ACCEPT_ATTR = [
@@ -17,12 +18,17 @@ const ACCEPT_ATTR = [
   "text/csv",
   "text/plain",
   "application/pdf",
+  "image/png",
+  "image/jpeg",
+  "image/tiff",
+  "image/bmp",
+  "image/webp",
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   "application/vnd.ms-excel",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ].join(",");
 
-const PLAIN_TEXT_EXTENSIONS = new Set([".csv", ".tsv", ".txt", ".md"]);
+const TABULAR_EXTENSIONS = new Set([".csv", ".tsv", ".xlsx", ".xls"]);
 
 function extOf(name) {
   const i = name.lastIndexOf(".");
@@ -96,11 +102,12 @@ export default function TabularReviewView({ settings }) {
       const buf = await f.arrayBuffer();
       const result = await window.fileParser.parse(buf, f.name);
       if (result?.error) throw new Error(result.error);
+      if (!result?.text?.trim()) throw new Error("No readable text was found in this file.");
       setFile({
         name: f.name,
         sizeBytes: f.size,
         text: result?.text || "",
-        kind: PLAIN_TEXT_EXTENSIONS.has(ext) ? "tabular" : "document",
+        kind: TABULAR_EXTENSIONS.has(ext) ? "tabular" : "document",
       });
       setMessages([]);
     } catch (err) {
@@ -133,14 +140,15 @@ export default function TabularReviewView({ settings }) {
     setIsStreaming(true);
 
     const provider = settings?.provider || DEFAULT_SETTINGS.provider;
-    const temperature = DEFAULT_SETTINGS.temperature;
+    const temperature = settings?.temperature ?? DEFAULT_SETTINGS.temperature;
     const model =
       provider === "ollama"
         ? settings?.model || DEFAULT_SETTINGS.model
         : settings?.cloudModels?.[provider] || DEFAULT_SETTINGS.cloudModels[provider];
 
     const label = file.kind === "tabular" ? "spreadsheet" : "document";
-    const dataBlock = `## Attached ${label}: ${file.name}\n\n\`\`\`\n${file.text.slice(0, 30000)}${file.text.length > 30000 ? "\n[…truncated…]" : ""}\n\`\`\``;
+    const modelTextLimit = 30000;
+    const dataBlock = `## Attached ${label}: ${file.name}\n\n\`\`\`\n${file.text.slice(0, modelTextLimit)}${file.text.length > modelTextLimit ? "\n[…truncated…]" : ""}\n\`\`\``;
 
     const requestId = `tab-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     requestIdRef.current = requestId;
@@ -150,7 +158,7 @@ export default function TabularReviewView({ settings }) {
         { role: "system", content: `${TABULAR_SYSTEM_PROMPT}\n\n${dataBlock}` },
         ...next.slice(0, -1),
       ],
-      { provider, model, temperature },
+      { provider, model, temperature, rawMessages: true, mode: "tabular_review" },
       requestId
     );
   };
@@ -163,6 +171,7 @@ export default function TabularReviewView({ settings }) {
 
   const previewLines = file ? file.text.split("\n").slice(0, 80) : [];
   const totalLines = file ? file.text.split("\n").length : 0;
+  const isModelTextTruncated = file ? file.text.length > 30000 : false;
 
   return (
     <main className="flex flex-col flex-1 overflow-hidden" style={{ background: "#FBFAF7" }}>
@@ -238,7 +247,7 @@ export default function TabularReviewView({ settings }) {
             >
               <pre className="p-3 whitespace-pre" style={{ tabSize: 16 }}>
                 {previewLines.join("\n")}
-                {totalLines > 80 && `\n…${totalLines - 80} more lines (full text sent to model)`}
+                {totalLines > 80 && `\n…${totalLines - 80} more lines (${isModelTextTruncated ? "first 30,000 characters sent to model" : "full text sent to model"})`}
               </pre>
             </div>
 
