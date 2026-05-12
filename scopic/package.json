@@ -1,6 +1,6 @@
 {
   "name": "scopic",
-  "version": "1.9.3",
+  "version": "1.9.4",
   "description": "Scopic - Legal AI assistant. Local-first via Ollama, with optional Anthropic/OpenAI/Gemini support.",
   "main": "src/main/index.js",
   "author": "Scopic",
@@ -65,8 +65,7 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "build/icon.ico",
-      "signAndEditExecutable": false
+      "icon": "build/icon.ico"
     },
     "nsis": {
       "oneClick": true,
