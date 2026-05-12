@@ -76,34 +76,42 @@ export default function Sidebar({
       className="flex flex-col border-r "
       style={{ width: 260, minWidth: 260, height: "100%", background: "var(--sidebar)", borderColor: "var(--border)" }}
     >
-      {/* Header */}
-      <div className="px-5 pt-5 pb-4 border-b" style={{ borderColor: "var(--border)" }}>
-        <div className="flex items-center gap-3">
-          <div
-            className="flex items-center justify-center rounded-xl"
-            style={{
-              width: 40,
-              height: 40,
-              background: "var(--surface)",
-              border: "1px solid var(--border)",
-            }}
-          >
-            <ScopicLogo size={26} color="var(--text)" title="Scopic" />
-          </div>
+      {/* Header — bare SVG logo, no box, sits next to wordmark */}
+      <div className="px-4 pt-5 pb-3">
+        <div className="flex items-center gap-2.5 px-1">
+          <ScopicLogo size={28} color="var(--text)" title="Scopic" />
           <span
-            className="text-2xl font-semibold leading-none"
-            style={{ color: "var(--text)", fontFamily: "DM Serif Display, Georgia, serif" }}
+            className="text-[26px] leading-none"
+            style={{ color: "var(--text)", fontFamily: "DM Serif Display, Georgia, serif", letterSpacing: "-0.01em" }}
           >
             Scopic
           </span>
         </div>
-        <p className="text-xs mt-2" style={{ color: "var(--muted)" }}>
-          Open-source legal workspace
-        </p>
+      </div>
+
+      {/* Primary action: New chat (Claude-style prominent row) */}
+      <div className="px-2 pb-1">
+        <button
+          onClick={onNewConversation}
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+          style={{
+            background: "transparent",
+            color: "var(--text)",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "var(--sidebar-hover)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+          title="Start a new chat"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          <span>New chat</span>
+        </button>
       </div>
 
       {/* Top-level section nav */}
-      <nav className="px-2 pt-3 pb-2 space-y-0.5">
+      <nav className="px-2 pt-1 pb-2 space-y-0.5">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const active = activeView === item.id;
@@ -111,10 +119,9 @@ export default function Sidebar({
             <button
               key={item.id}
               onClick={() => onChangeView(item.id)}
-              className="relative w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150"
+              className="relative w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
               style={{
                 background: active ? "var(--sidebar-hover)" : "transparent",
-                border: active ? "1px solid var(--border)" : "1px solid transparent",
                 color: active ? "var(--text)" : "var(--text-soft)",
               }}
               onMouseEnter={(e) => {
@@ -140,25 +147,14 @@ export default function Sidebar({
       {/* Assistant history (only in Assistant view) */}
       {activeView === "assistant" && (
         <>
-          <div className="mx-3 mt-2 border-t" style={{ borderColor: "var(--border)" }} />
-          <div className="px-3 pt-3 pb-1 flex items-center justify-between">
+          <div className="px-4 pt-3 pb-1">
             <button
               onClick={() => setHistoryOpen((v) => !v)}
-              className="flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase"
+              className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wide"
               style={{ color: "var(--muted)" }}
             >
-              <span>{historyOpen ? "▼" : "▶"}</span>
-              <span>Assistant History</span>
-            </button>
-            <button
-              onClick={onNewConversation}
-              className="text-xs px-1.5 py-0.5 rounded transition-colors"
-              style={{ color: "var(--muted)" }}
-              title="New chat"
-              onMouseEnter={(e) => { e.currentTarget.style.color = "var(--accent)"; e.currentTarget.style.background = "var(--sidebar-hover)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = "var(--muted)"; e.currentTarget.style.background = "transparent"; }}
-            >
-              + New
+              <span>Recents</span>
+              <span className="text-[9px] opacity-70">{historyOpen ? "▾" : "▸"}</span>
             </button>
           </div>
 
@@ -276,12 +272,13 @@ function ConversationRow({ conv, active, hovered, setHovered, onSelect, onDelete
     >
       <button
         onClick={onSelect}
-        className="w-full text-left px-3 py-2 rounded-lg transition-colors duration-100 text-xs"
+        className="w-full text-left px-3 py-1.5 rounded-lg transition-colors duration-100 text-[13px]"
         style={{
           background: active ? "var(--sidebar-hover)" : "transparent",
-          color: active ? "var(--text)" : "var(--muted)",
-          border: active ? "1px solid var(--border)" : "1px solid transparent",
+          color: active ? "var(--text)" : "var(--text-soft)",
         }}
+        onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = "var(--sidebar-hover)"; }}
+        onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = "transparent"; }}
       >
         <div className="truncate pr-10">{conv.title || "Untitled"}</div>
       </button>

@@ -88,59 +88,98 @@ body,
 }
 
 /* Markdown styles inside chat */
+.prose-legal {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text);
+}
+.prose-legal > *:first-child { margin-top: 0; }
+.prose-legal > *:last-child { margin-bottom: 0; }
 .prose-legal h1,
 .prose-legal h2,
-.prose-legal h3 {
-  color: var(--accent-strong);
-  font-family: Inter, "DM Sans", "Segoe UI", system-ui, sans-serif;
-  margin-top: 1rem;
-  margin-bottom: 0.5rem;
+.prose-legal h3,
+.prose-legal h4 {
+  color: var(--text);
+  font-family: "DM Serif Display", Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  margin-top: 1.6rem;
+  margin-bottom: 0.6rem;
+  line-height: 1.25;
 }
-.prose-legal h1 { font-size: 1.25rem; }
-.prose-legal h2 { font-size: 1.1rem; }
-.prose-legal h3 { font-size: 1rem; }
-.prose-legal p { margin-bottom: 0.75rem; line-height: 1.7; }
+.prose-legal h1 { font-size: 1.6rem; }
+.prose-legal h2 { font-size: 1.3rem; }
+.prose-legal h3 { font-size: 1.1rem; }
+.prose-legal h4 { font-size: 1rem; font-family: Inter, "DM Sans", "Segoe UI", system-ui, sans-serif; font-weight: 600; }
+.prose-legal p { margin: 0 0 0.85rem; line-height: 1.7; }
 .prose-legal ul,
 .prose-legal ol {
-  padding-left: 1.5rem;
-  margin-bottom: 0.75rem;
+  padding-left: 1.4rem;
+  margin: 0 0 0.85rem;
 }
-.prose-legal li { margin-bottom: 0.25rem; line-height: 1.6; }
+.prose-legal ul { list-style: disc; }
+.prose-legal ol { list-style: decimal; }
+.prose-legal li { margin-bottom: 0.35rem; line-height: 1.65; }
+.prose-legal li > p { margin-bottom: 0.35rem; }
+.prose-legal li::marker { color: var(--muted-2); }
 .prose-legal code {
   background: var(--surface-soft);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-soft);
   padding: 0.1rem 0.35rem;
   border-radius: 4px;
-  font-size: 0.85em;
-  font-family: "Courier New", monospace;
+  font-size: 0.88em;
+  font-family: "JetBrains Mono", "SF Mono", Menlo, "Courier New", monospace;
 }
 .prose-legal pre {
   background: var(--surface-soft);
-  border: 1px solid var(--border);
-  padding: 1rem;
-  border-radius: 8px;
+  border: 1px solid var(--border-soft);
+  padding: 0.9rem 1rem;
+  border-radius: 10px;
   overflow-x: auto;
-  margin-bottom: 0.75rem;
+  margin: 0.5rem 0 0.85rem;
+  font-size: 0.88em;
+  line-height: 1.6;
 }
 .prose-legal pre code {
   background: transparent;
   border: none;
   padding: 0;
 }
-.prose-legal strong { color: var(--text); }
+.prose-legal strong { color: var(--text); font-weight: 600; }
+.prose-legal em { color: var(--text); }
 .prose-legal blockquote {
   border-left: 3px solid var(--accent);
-  padding-left: 1rem;
+  padding: 0.1rem 0 0.1rem 0.9rem;
   color: var(--text-soft);
-  margin-bottom: 0.75rem;
+  margin: 0 0 0.85rem;
+  font-style: italic;
 }
 .prose-legal a {
   color: var(--accent-strong);
   text-decoration: underline;
+  text-underline-offset: 2px;
 }
 .prose-legal hr {
-  border-color: var(--border);
-  margin: 1rem 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 1.2rem 0;
+}
+.prose-legal table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.5rem 0 1rem;
+  font-size: 0.92em;
+}
+.prose-legal th,
+.prose-legal td {
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.7rem;
+  text-align: left;
+  vertical-align: top;
+}
+.prose-legal th {
+  background: var(--surface-soft);
+  font-weight: 600;
 }
 
 /* Streaming cursor blink */

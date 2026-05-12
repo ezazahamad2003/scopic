@@ -51,40 +51,18 @@ export default function MessageBubble({ message, isStreaming }) {
     downloadBlob(message.content || "", defaultFilename(message.content, ext), mime);
   };
 
-  return (
-    <div
-      className={`flex w-full ${isUser ? "justify-end" : "justify-start"} mb-4`}
-    >
-      {/* Avatar for assistant */}
-      {isAssistant && (
-        <div
-          className="w-8 h-8 rounded-lg flex-shrink-0 mr-3 flex items-center justify-center mt-0.5"
-          style={{
-            background: "var(--surface)",
-            border: "1px solid var(--border)",
-            color: "var(--text)",
-          }}
-        >
-          <ScopicLogo size={18} color="var(--text)" />
+  // Assistant: full-width, no surrounding box — text flows on the chat
+  // background like Claude. The logo sits to the left, large, no chrome.
+  if (isAssistant) {
+    return (
+      <div className="flex w-full gap-4 mb-8">
+        <div className="flex-shrink-0 pt-1" style={{ width: 40 }}>
+          <ScopicLogo size={32} color="var(--text)" />
         </div>
-      )}
-
-      <div className={`max-w-[78%] flex flex-col ${isUser ? "items-end" : "items-start"}`}>
-        <div
-          className={
-            isUser
-              ? "rounded-2xl rounded-tr-sm px-4 py-3"
-              : "rounded-2xl rounded-tl-sm px-4 py-3"
-          }
-          style={{
-            background: isUser ? "var(--surface-soft)" : "var(--surface)",
-            border: "1px solid var(--border)",
-            color: message.isError ? "var(--danger)" : "var(--text)",
-          }}
-        >
+        <div className="flex-1 min-w-0">
           {isThinking ? (
             <div className="flex items-center gap-1.5 py-1">
-              <span className="text-gray-500 text-sm italic">Thinking</span>
+              <span className="text-sm italic" style={{ color: "var(--muted)" }}>Thinking</span>
               <div className="flex gap-1">
                 {[0, 1, 2].map((i) => (
                   <div
@@ -95,48 +73,51 @@ export default function MessageBubble({ message, isStreaming }) {
                 ))}
               </div>
             </div>
-          ) : isUser ? (
-            <p className="text-sm leading-relaxed whitespace-pre-wrap">
-              {message.content}
-            </p>
           ) : (
             <div
-              className={`prose-legal text-sm ${
+              className={`prose-legal ${
                 isStreaming && !message.isError ? "streaming-cursor" : ""
               }`}
+              style={{ color: message.isError ? "var(--danger)" : "var(--text)" }}
               dangerouslySetInnerHTML={{
                 __html: renderMarkdown(message.content),
               }}
             />
           )}
-        </div>
 
-        {showActions && (
-          <div className="flex items-center gap-1 mt-1.5 ml-1 text-[11px]" style={{ color: "var(--muted)" }}>
-            <ActionButton onClick={handleCopy} title="Copy to clipboard">
-              {copied ? "Copied" : "Copy"}
-            </ActionButton>
-            <span style={{ color: "var(--border)" }}>·</span>
-            <ActionButton onClick={() => handleDownload("md")} title="Download as Markdown">
-              Download .md
-            </ActionButton>
-            <span style={{ color: "var(--border)" }}>·</span>
-            <ActionButton onClick={() => handleDownload("txt")} title="Download as plain text">
-              .txt
-            </ActionButton>
-          </div>
-        )}
+          {showActions && (
+            <div className="flex items-center gap-1 mt-3 -ml-1 text-[11px]" style={{ color: "var(--muted)" }}>
+              <ActionButton onClick={handleCopy} title="Copy to clipboard">
+                {copied ? "Copied" : "Copy"}
+              </ActionButton>
+              <ActionButton onClick={() => handleDownload("md")} title="Download as Markdown">
+                .md
+              </ActionButton>
+              <ActionButton onClick={() => handleDownload("txt")} title="Download as plain text">
+                .txt
+              </ActionButton>
+            </div>
+          )}
+        </div>
       </div>
+    );
+  }
 
-      {/* Avatar for user */}
-      {isUser && (
-        <div
-          className="w-8 h-8 rounded-lg flex-shrink-0 ml-3 flex items-center justify-center text-xs font-bold mt-0.5"
-          style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--text)" }}
-        >
-          U
-        </div>
-      )}
+  // User: subtle pill on the right.
+  return (
+    <div className="flex w-full justify-end mb-6">
+      <div
+        className="max-w-[78%] rounded-2xl px-4 py-2.5"
+        style={{
+          background: "var(--surface-soft)",
+          border: "1px solid var(--border-soft)",
+          color: "var(--text)",
+        }}
+      >
+        <p className="text-[15px] leading-relaxed whitespace-pre-wrap">
+          {message.content}
+        </p>
+      </div>
     </div>
   );
 }
@@ -146,7 +127,7 @@ function ActionButton({ children, onClick, title }) {
     <button
       onClick={onClick}
       title={title}
-      className="px-1.5 py-0.5 rounded transition-colors"
+      className="px-2 py-1 rounded transition-colors"
       style={{ color: "var(--muted)" }}
       onMouseEnter={(e) => { e.currentTarget.style.color = "var(--text)"; e.currentTarget.style.background = "var(--surface-soft)"; }}
       onMouseLeave={(e) => { e.currentTarget.style.color = "var(--muted)"; e.currentTarget.style.background = "transparent"; }}

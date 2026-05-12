@@ -103,34 +103,24 @@ export default function ChatArea({
 
       {showWelcome ? (
         <div className="flex flex-1 flex-col justify-center pb-16">
-          <div className="mx-auto w-full max-w-5xl px-6 mb-6 flex flex-col items-center text-center select-none">
-            <div
-              className="flex items-center justify-center rounded-2xl mb-4"
-              style={{
-                width: 72,
-                height: 72,
-                background: "var(--surface)",
-                border: "1px solid var(--border)",
-                boxShadow: "0 12px 30px var(--shadow)",
-              }}
-            >
-              <ScopicLogo size={44} color="var(--text)" title="Scopic" />
-            </div>
+          <div className="mx-auto w-full max-w-5xl px-6 mb-8 flex flex-col items-center text-center select-none">
+            <ScopicLogo size={88} color="var(--text)" title="Scopic" />
             <h1
-              className="text-3xl"
+              className="text-4xl mt-6"
               style={{
                 fontFamily: "DM Serif Display, Georgia, serif",
                 color: "var(--text)",
-                letterSpacing: "-0.01em",
+                letterSpacing: "-0.015em",
+                lineHeight: 1.15,
               }}
             >
-              {greetingForNow()} — welcome to <span style={{ color: "var(--accent-strong)" }}>Scopic</span>.
+              {greetingForNow()} — hi from <span style={{ color: "var(--accent-strong)" }}>Scopic</span>.
             </h1>
             <p
-              className="text-sm mt-2 max-w-md"
+              className="text-sm mt-3 max-w-md"
               style={{ color: "var(--muted)" }}
             >
-              Hi from Scopic. Ask a legal question, drop in a contract, or pick a workflow below.
+              Ask a legal question, drop in a contract, or pick a workflow below.
             </p>
           </div>
           <InputBar
