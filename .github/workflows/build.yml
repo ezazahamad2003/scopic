@@ -26,6 +26,10 @@ jobs:
         working-directory: ./scopic
         run: npm install
 
+      - name: Rebuild native modules against Electron
+        working-directory: ./scopic
+        run: npx electron-builder install-app-deps
+
       - name: Build renderer
         working-directory: ./scopic
         run: npx vite build

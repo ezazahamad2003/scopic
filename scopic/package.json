@@ -1,6 +1,6 @@
 {
   "name": "scopic",
-  "version": "1.8.9",
+  "version": "1.8.10",
   "description": "Scopic - Legal AI assistant. Local-first via Ollama, with optional Anthropic/OpenAI/Gemini support.",
   "main": "src/main/index.js",
   "author": "Scopic",
@@ -13,7 +13,7 @@
     "build:win": "vite build && electron-builder --win",
     "start": "electron .",
     "preview": "vite preview",
-    "postinstall": "electron-builder install-app-deps"
+    "rebuild": "electron-builder install-app-deps"
   },
   "dependencies": {
     "better-sqlite3": "^11.10.0",

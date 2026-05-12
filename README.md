@@ -258,7 +258,8 @@ Recommended chat models by hardware:
 ```bash
 git clone https://github.com/ezazahamad2003/scopic.git
 cd scopic/scopic
-npm install              # rebuilds better-sqlite3 against the Electron ABI
+npm install
+npm run rebuild          # rebuild native modules (better-sqlite3) against the Electron ABI
 ollama pull phi3
 ollama pull nomic-embed-text
 npm run dev              # starts Vite + Electron
