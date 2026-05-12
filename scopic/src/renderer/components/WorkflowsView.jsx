@@ -1,93 +1,241 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import { WORKFLOWS, WORKFLOW_PIPELINES } from "../utils/constants.js";
 
-// Full-pane gallery of all workflows. Single-prompt ones drop into the
-// chat input (caller routes that to Assistant view). Multi-step
-// pipelines open the WorkflowRunner.
+const TYPE_OPTIONS = ["All types", "Assistant", "Pipeline"];
+const PRACTICE_OPTIONS = [
+  "All practices",
+  "Corporate",
+  "Finance",
+  "General Transactions",
+  "Litigation",
+  "Private Equity",
+  "Regulatory",
+  "Startup",
+];
+
+const WORKFLOW_META = {
+  "cp-checklist": { practice: "Finance" },
+  "credit-summary": { practice: "Finance" },
+  "shareholder-summary": { practice: "Corporate" },
+  "change-control": { practice: "Corporate" },
+  "nda-draft": { practice: "General Transactions" },
+  "contract-risks": { practice: "General Transactions" },
+  "case-irac": { practice: "Litigation" },
+  "compliance-scan": { practice: "Regulatory" },
+  "ip-protection": { practice: "Startup" },
+  "term-sheet": { practice: "Startup" },
+  "contract-pipeline": { practice: "General Transactions" },
+  "litigation-prep": { practice: "Litigation" },
+  "diligence-pipeline": { practice: "Private Equity" },
+};
+
+function typeColor(type) {
+  return type === "Pipeline" ? "#7C3AED" : "#006BFF";
+}
+
+function workflowRows() {
+  const assistantRows = WORKFLOWS.map((workflow) => ({
+    id: workflow.id,
+    name: workflow.title,
+    description: workflow.blurb,
+    type: "Assistant",
+    practice: WORKFLOW_META[workflow.id]?.practice || "General Transactions",
+    source: "Scopic",
+    item: workflow,
+  }));
+
+  const pipelineRows = (WORKFLOW_PIPELINES || []).map((pipeline) => ({
+    id: pipeline.id,
+    name: pipeline.title,
+    description: pipeline.blurb,
+    type: "Pipeline",
+    practice: WORKFLOW_META[pipeline.id]?.practice || "General Transactions",
+    source: "Scopic",
+    item: pipeline,
+  }));
+
+  return [...assistantRows, ...pipelineRows].sort((a, b) => a.name.localeCompare(b.name));
+}
+
 export default function WorkflowsView({ onPickWorkflow, onRunPipeline }) {
+  const [activeTab, setActiveTab] = useState("All Workflows");
+  const [query, setQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState("All types");
+  const [practiceFilter, setPracticeFilter] = useState("All practices");
+  const rows = useMemo(workflowRows, []);
+
+  const filteredRows = rows.filter((row) => {
+    if (activeTab === "Built-in" && row.source !== "Scopic") return false;
+    if (activeTab === "Custom") return false;
+    if (activeTab === "Hidden") return false;
+    if (typeFilter !== "All types" && row.type !== typeFilter) return false;
+    if (practiceFilter !== "All practices" && row.practice !== practiceFilter) return false;
+    if (query.trim()) {
+      const haystack = `${row.name} ${row.description} ${row.practice} ${row.type}`.toLowerCase();
+      if (!haystack.includes(query.trim().toLowerCase())) return false;
+    }
+    return true;
+  });
+
+  const handleRun = (row) => {
+    if (row.type === "Pipeline") onRunPipeline(row.item);
+    else onPickWorkflow(row.item);
+  };
+
   return (
-    <main className="flex flex-col flex-1 overflow-hidden" style={{ background: "#FBFAF7" }}>
-      <div className="px-8 py-6 border-b" style={{ borderColor: "#F8FAFC" }}>
-        <h1 className="text-xl font-semibold" style={{ fontFamily: "DM Serif Display, serif", color: "#1F2937" }}>
-          Workflows
-        </h1>
-        <p className="text-xs mt-0.5" style={{ color: "#64748B" }}>
-          Pre-built legal flows. One-shot prompts drop into chat. Multi-step pipelines run sequentially with streamed outputs.
-        </p>
+    <main className="flex flex-1 flex-col overflow-hidden" style={{ background: "#FFFFFF" }}>
+      <div className="border-b px-10 py-7" style={{ borderColor: "#E5E7EB" }}>
+        <div className="flex items-start justify-between gap-6">
+          <h1
+            className="text-3xl font-semibold"
+            style={{ fontFamily: "DM Serif Display, Georgia, serif", color: "#111827" }}
+          >
+            Workflows
+          </h1>
+          <div className="flex items-center gap-3">
+            <div
+              className="flex h-9 items-center rounded-lg border px-3"
+              style={{ borderColor: "#E5E7EB", color: "#64748B" }}
+            >
+              <span className="text-sm">Search</span>
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="ml-2 w-44 bg-transparent text-sm outline-none"
+                style={{ color: "#111827" }}
+                placeholder="workflow name"
+              />
+            </div>
+            <button
+              type="button"
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-xl transition-colors hover:bg-[#F3F4F6]"
+              style={{ color: "#64748B" }}
+              title="New workflow"
+            >
+              +
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-8 flex items-center justify-between gap-6">
+          <div className="flex items-center gap-7">
+            {["All Workflows", "Built-in", "Custom", "Hidden"].map((tab) => {
+              const active = activeTab === tab;
+              return (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveTab(tab)}
+                  className="text-sm font-medium transition-colors"
+                  style={{ color: active ? "#0F2748" : "#64748B" }}
+                >
+                  {tab}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center gap-3">
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="bg-transparent text-sm outline-none"
+              style={{ color: "#475569" }}
+            >
+              {TYPE_OPTIONS.map((option) => (
+                <option key={option}>{option}</option>
+              ))}
+            </select>
+            <select
+              value={practiceFilter}
+              onChange={(e) => setPracticeFilter(e.target.value)}
+              className="bg-transparent text-sm outline-none"
+              style={{ color: "#475569" }}
+            >
+              {PRACTICE_OPTIONS.map((option) => (
+                <option key={option}>{option}</option>
+              ))}
+            </select>
+          </div>
+        </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-8 py-6">
-        {/* Multi-step pipelines */}
-        {WORKFLOW_PIPELINES?.length > 0 && (
-          <section className="mb-8 max-w-5xl">
-            <h2 className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: "#315A98" }}>
-              Pipelines · multi-step
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {WORKFLOW_PIPELINES.map((pl) => (
-                <button
-                  key={pl.id}
-                  onClick={() => onRunPipeline(pl)}
-                  className="text-left p-4 rounded-xl transition-all"
-                  style={{
-                    background: "#FFFFFF",
-                    border: "1px solid #D8DEE8",
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#315A98"; e.currentTarget.style.background = "#F8FAFC"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#D8DEE8"; e.currentTarget.style.background = "#FFFFFF"; }}
-                >
-                  <div className="flex items-start gap-3">
-                    <span className="text-xl mt-0.5">{pl.icon}</span>
-                    <div className="flex-1">
-                      <div className="text-sm font-semibold mb-1" style={{ color: "#315A98" }}>
-                        {pl.title}
-                      </div>
-                      <div className="text-xs leading-snug" style={{ color: "#475569" }}>
-                        {pl.blurb}
-                      </div>
-                      <div className="text-[11px] mt-2" style={{ color: "#94A3B8" }}>
-                        {pl.steps.length} steps · {pl.inputs.length} input{pl.inputs.length === 1 ? "" : "s"}
-                      </div>
-                    </div>
-                    <span className="text-xs" style={{ color: "#315A98" }}>Run →</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Single-prompt workflows */}
-        <section className="max-w-5xl">
-          <h2 className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: "#315A98" }}>
-            Quick prompts
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {WORKFLOWS.map((wf) => (
-              <button
-                key={wf.id}
-                onClick={() => onPickWorkflow(wf)}
-                className="text-left p-4 rounded-xl transition-all"
-                style={{
-                  background: "#FFFFFF",
-                  border: "1px solid #D8DEE8",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#315A9866"; e.currentTarget.style.background = "#FFFFFF"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#D8DEE8"; e.currentTarget.style.background = "#FFFFFF"; }}
+      <div className="flex-1 overflow-auto">
+        <table className="w-full border-collapse text-left">
+          <thead>
+            <tr className="border-b text-sm" style={{ borderColor: "#E5E7EB", color: "#64748B" }}>
+              <th className="w-12 px-5 py-3 font-medium">
+                <input type="checkbox" aria-label="Select all workflows" />
+              </th>
+              <th className="px-3 py-3 font-medium">Name</th>
+              <th className="w-36 px-3 py-3 font-medium">Type</th>
+              <th className="w-52 px-3 py-3 font-medium">Practice</th>
+              <th className="w-40 px-3 py-3 font-medium">Source</th>
+              <th className="w-24 px-6 py-3 text-right font-medium" />
+            </tr>
+          </thead>
+          <tbody>
+            {filteredRows.map((row) => (
+              <tr
+                key={row.id}
+                className="group border-b transition-colors hover:bg-[#FAFAFA]"
+                style={{ borderColor: "#F1F5F9" }}
               >
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-base">{wf.icon}</span>
-                  <span className="text-sm font-medium" style={{ color: "#1F2937" }}>
-                    {wf.title}
+                <td className="px-5 py-4">
+                  <input type="checkbox" aria-label={`Select ${row.name}`} />
+                </td>
+                <td className="px-3 py-4">
+                  <button
+                    type="button"
+                    onClick={() => handleRun(row)}
+                    className="text-left text-base font-medium transition-colors hover:text-[#315A98]"
+                    style={{ color: "#071A33" }}
+                  >
+                    {row.name}
+                  </button>
+                  <div className="mt-1 max-w-2xl truncate text-xs" style={{ color: "#64748B" }}>
+                    {row.description}
+                  </div>
+                </td>
+                <td className="px-3 py-4">
+                  <span className="inline-flex items-center gap-2 text-sm font-medium" style={{ color: typeColor(row.type) }}>
+                    <span
+                      className="h-3 w-3 rounded-[3px] border"
+                      style={{ borderColor: typeColor(row.type) }}
+                    />
+                    {row.type}
                   </span>
-                </div>
-                <div className="text-xs leading-snug" style={{ color: "#64748B" }}>
-                  {wf.blurb}
-                </div>
-              </button>
+                </td>
+                <td className="px-3 py-4 text-sm" style={{ color: "#334155" }}>
+                  {row.practice}
+                </td>
+                <td className="px-3 py-4">
+                  <span className="inline-flex items-center gap-2 text-sm" style={{ color: "#334155" }}>
+                    <span className="text-base">✺</span>
+                    {row.source}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-right">
+                  <button
+                    type="button"
+                    onClick={() => handleRun(row)}
+                    className="rounded-lg px-2 py-1 text-sm opacity-60 transition-opacity hover:opacity-100"
+                    style={{ color: "#0F2748" }}
+                    title={`Run ${row.name}`}
+                  >
+                    ...
+                  </button>
+                </td>
+              </tr>
             ))}
+          </tbody>
+        </table>
+
+        {filteredRows.length === 0 && (
+          <div className="flex h-56 items-center justify-center text-sm" style={{ color: "#64748B" }}>
+            No workflows match these filters.
           </div>
-        </section>
+        )}
       </div>
     </main>
   );
