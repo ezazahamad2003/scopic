@@ -85,6 +85,11 @@ export default function MessageBubble({ message, isStreaming }) {
             />
           )}
 
+          {/* Retrieval chip — shows up when RAG or inline retrieval fired */}
+          {!isThinking && (message.retrievalMode || message.citations?.length) && (
+            <RetrievalChip mode={message.retrievalMode} citations={message.citations} />
+          )}
+
           {showActions && (
             <div className="flex items-center gap-1 mt-3 -ml-1 text-[11px]" style={{ color: "var(--muted)" }}>
               <ActionButton onClick={handleCopy} title="Copy to clipboard">
@@ -134,5 +139,70 @@ function ActionButton({ children, onClick, title }) {
     >
       {children}
     </button>
+  );
+}
+
+function RetrievalChip({ mode, citations }) {
+  const [expanded, setExpanded] = useState(false);
+  const [docs, setDocs] = useState({});
+
+  // Resolve filenames for any citation document_id we don't already know.
+  React.useEffect(() => {
+    if (!citations?.length || !window.documents) return;
+    const need = citations.map((c) => c.documentId).filter((id) => id && !docs[id]);
+    if (!need.length) return;
+    Promise.all(need.map((id) => window.documents.get(id))).then((rows) => {
+      const next = { ...docs };
+      for (const row of rows) if (row?.id) next[row.id] = row;
+      setDocs(next);
+    });
+  }, [citations]);
+
+  const label = (() => {
+    if (mode === "rag") return `Grounded on ${citations?.length || 0} excerpt${citations?.length === 1 ? "" : "s"}`;
+    if (mode === "deep-review") return `Deep review — ${citations?.length || 0} section${citations?.length === 1 ? "" : "s"} read`;
+    if (mode === "inline") return `Using ${citations?.length || 0} pinned doc${citations?.length === 1 ? "" : "s"}`;
+    if (mode === "project") return `Matter context applied`;
+    return null;
+  })();
+  if (!label) return null;
+
+  return (
+    <div className="mt-3 -ml-1 text-[11px]">
+      <button
+        onClick={() => setExpanded((v) => !v)}
+        className="inline-flex items-center gap-1.5 px-2 py-1 rounded transition-colors"
+        style={{
+          color: "var(--muted)",
+          background: "var(--surface-soft)",
+          border: "1px solid var(--border-soft)",
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.color = "var(--text)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.color = "var(--muted)"; }}
+      >
+        <span>📎</span>
+        <span>{label}</span>
+        {citations?.length > 0 && <span style={{ color: "var(--muted-2)" }}>{expanded ? "▾" : "▸"}</span>}
+      </button>
+      {expanded && citations?.length > 0 && (
+        <div className="mt-2 space-y-1 pl-1">
+          {citations.map((c) => {
+            const name = docs[c.documentId]?.filename || "document";
+            const where = c.sectionPath || (c.pageNumber ? `p. ${c.pageNumber}` : "");
+            return (
+              <div
+                key={c.citationIndex}
+                className="text-[11px] py-0.5"
+                style={{ color: "var(--muted)" }}
+              >
+                <span style={{ color: "var(--accent-strong)" }}>[{c.citationIndex}]</span>{" "}
+                <span style={{ color: "var(--text-soft)" }}>{name}</span>
+                {where && <span> — {where}</span>}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }

@@ -6,55 +6,11 @@ import {
   generateId,
   formatConversationTitle,
 } from "../utils/storage.js";
-import {
-  LEGAL_SYSTEM_PROMPT,
-  CONTRACT_REVIEW_SYSTEM_PROMPT,
-  DEFAULT_SETTINGS,
-} from "../utils/constants.js";
+import { DEFAULT_SETTINGS } from "../utils/constants.js";
 
-// Hard cap on total project-document text injected into the system prompt.
-// Keeps us under cloud-provider context limits even with long docs pinned.
-const MAX_TOTAL_DOC_CHARS = 30000;
-
-function getSystemPrompt(mode, project) {
-  const base = mode === "document_review" ? CONTRACT_REVIEW_SYSTEM_PROMPT : LEGAL_SYSTEM_PROMPT;
-  if (!project) return base;
-
-  const hasDescription = Boolean(project.description?.trim());
-  const docs = (project.documents || []).filter((d) => d.text && !d.error);
-  if (!hasDescription && docs.length === 0) return base;
-
-  const parts = [];
-  parts.push(`## ACTIVE PROJECT: ${project.name}`);
-  if (hasDescription) {
-    parts.push("");
-    parts.push("### Context");
-    parts.push(project.description.trim());
-  }
-  if (docs.length > 0) {
-    parts.push("");
-    parts.push("### Pinned Documents");
-    let used = 0;
-    for (const doc of docs) {
-      const remaining = MAX_TOTAL_DOC_CHARS - used;
-      if (remaining <= 200) break;
-      const text = doc.text.length > remaining
-        ? doc.text.slice(0, remaining) + "\n\n[…truncated…]"
-        : doc.text;
-      parts.push("");
-      parts.push(`#### ${doc.name}`);
-      parts.push(text);
-      used += text.length;
-    }
-  }
-  parts.push("");
-  parts.push("Keep the above project context in mind for all responses.");
-  parts.push("");
-  parts.push("---");
-  parts.push("");
-  return `${parts.join("\n")}${base}`;
-}
-
+// The renderer no longer builds the system prompt — main owns retrieval,
+// system prompt composition, and citations. We just hand main the chat
+// history + the active project id and let it route.
 export function useChat(activeConversationId, setActiveConversationId, settings, activeMode, activeProject, activeProjectId) {
   const [conversations, setConversations] = useState([]);
   const [currentMessages, setCurrentMessages] = useState([]);
@@ -64,34 +20,15 @@ export function useChat(activeConversationId, setActiveConversationId, settings,
   const activeModeRef = useRef(activeMode);
   const activeProjectIdRef = useRef(activeProjectId);
   const currentMessagesRef = useRef([]);
-  const activeProjectRef = useRef(activeProject);
   const requestIdRef = useRef(null);
 
-  useEffect(() => {
-    activeIdRef.current = activeConversationId;
-  }, [activeConversationId]);
+  useEffect(() => { activeIdRef.current = activeConversationId; }, [activeConversationId]);
+  useEffect(() => { activeModeRef.current = activeMode; }, [activeMode]);
+  useEffect(() => { activeProjectIdRef.current = activeProjectId; }, [activeProjectId]);
+  useEffect(() => { currentMessagesRef.current = currentMessages; }, [currentMessages]);
 
-  useEffect(() => {
-    activeModeRef.current = activeMode;
-  }, [activeMode]);
+  useEffect(() => { loadConversations(); }, []);
 
-  useEffect(() => {
-    activeProjectIdRef.current = activeProjectId;
-  }, [activeProjectId]);
-
-  useEffect(() => {
-    currentMessagesRef.current = currentMessages;
-  }, [currentMessages]);
-
-  useEffect(() => {
-    activeProjectRef.current = activeProject;
-  }, [activeProject]);
-
-  useEffect(() => {
-    loadConversations();
-  }, []);
-
-  // Wire up streaming listeners once.
   useEffect(() => {
     if (!window.chat) return;
 
@@ -109,8 +46,18 @@ export function useChat(activeConversationId, setActiveConversationId, settings,
       });
     });
 
-    const offDone = window.chat.onDone(({ requestId }) => {
+    const offDone = window.chat.onDone(({ requestId, mode }) => {
       if (requestId !== requestIdRef.current) return;
+      // Tag the final assistant message with retrieval mode so the
+      // citations chip can render the right label.
+      setCurrentMessages((prev) => {
+        const updated = [...prev];
+        const last = updated.length - 1;
+        if (updated[last]?.role === "assistant") {
+          updated[last] = { ...updated[last], retrievalMode: mode };
+        }
+        return updated;
+      });
       finalizeStream();
     });
 
@@ -120,11 +67,7 @@ export function useChat(activeConversationId, setActiveConversationId, settings,
         const updated = [...prev];
         const last = updated.length - 1;
         if (updated[last]?.role === "assistant") {
-          updated[last] = {
-            ...updated[last],
-            content: `Error: ${error}`,
-            isError: true,
-          };
+          updated[last] = { ...updated[last], content: `Error: ${error}`, isError: true };
         }
         return updated;
       });
@@ -132,11 +75,19 @@ export function useChat(activeConversationId, setActiveConversationId, settings,
       requestIdRef.current = null;
     });
 
-    return () => {
-      offToken?.();
-      offDone?.();
-      offError?.();
-    };
+    const offCitations = window.chat.onCitations(({ requestId, mode, citations }) => {
+      if (requestId !== requestIdRef.current) return;
+      setCurrentMessages((prev) => {
+        const updated = [...prev];
+        const last = updated.length - 1;
+        if (updated[last]?.role === "assistant") {
+          updated[last] = { ...updated[last], citations, retrievalMode: mode };
+        }
+        return updated;
+      });
+    });
+
+    return () => { offToken?.(); offDone?.(); offError?.(); offCitations?.(); };
   }, []);
 
   const loadConversations = async () => {
@@ -186,9 +137,6 @@ export function useChat(activeConversationId, setActiveConversationId, settings,
       if (!content.trim() || isStreaming) return;
       if (!window.chat) return;
 
-      // Always read the latest conversation/messages from refs so that
-      // callers who just created a new chat (e.g. workflow launchers using
-      // setTimeout) don't accidentally append to a stale closure's state.
       let convId = activeIdRef.current;
       if (!convId) {
         convId = generateId();
@@ -213,18 +161,22 @@ export function useChat(activeConversationId, setActiveConversationId, settings,
           ? settings?.model || DEFAULT_SETTINGS.model
           : settings?.cloudModels?.[provider] || DEFAULT_SETTINGS.cloudModels[provider];
 
-      const systemPrompt = getSystemPrompt(activeModeRef.current, activeProjectRef.current);
-      const messagesToSend = [
-        { role: "system", content: systemPrompt },
-        ...newMessages.slice(0, -1),
-      ];
+      // Send only user/assistant history (with the new user msg at the end).
+      // Main builds the system message based on project context + retrieval.
+      const messagesToSend = newMessages.slice(0, -1); // drop the assistant placeholder
 
       const requestId = generateId();
       requestIdRef.current = requestId;
 
       window.chat.send(
         messagesToSend,
-        { provider, model, temperature },
+        {
+          provider,
+          model,
+          temperature,
+          mode: activeModeRef.current,
+          projectId: activeProjectIdRef.current || null,
+        },
         requestId
       );
     },
@@ -243,9 +195,7 @@ export function useChat(activeConversationId, setActiveConversationId, settings,
 
   const stopStreaming = useCallback(() => {
     const requestId = requestIdRef.current;
-    if (requestId && window.chat) {
-      window.chat.abort(requestId);
-    }
+    if (requestId && window.chat) window.chat.abort(requestId);
     requestIdRef.current = null;
     setIsStreaming(false);
   }, []);
@@ -255,6 +205,36 @@ export function useChat(activeConversationId, setActiveConversationId, settings,
     setConversations((prev) => prev.filter((c) => c.id !== id));
     if (activeIdRef.current === id) setCurrentMessages([]);
   }, []);
+
+  // Deep Review — agent-style single-doc walk. Used by a button in chat.
+  const runDeepReview = useCallback(
+    async (documentId, question) => {
+      if (isStreaming || !window.rag) return;
+      let convId = activeIdRef.current;
+      if (!convId) {
+        convId = generateId();
+        setActiveConversationId(convId);
+        activeIdRef.current = convId;
+      }
+      const userMsg = { role: "user", content: `[Deep Review] ${question}` };
+      const placeholder = { role: "assistant", content: "" };
+      const next = [...(currentMessagesRef.current || []), userMsg, placeholder];
+      setCurrentMessages(next);
+      currentMessagesRef.current = next;
+      streamingMessageRef.current = "";
+      setIsStreaming(true);
+
+      const provider = settings?.provider || DEFAULT_SETTINGS.provider;
+      const model =
+        provider === "ollama"
+          ? settings?.model || DEFAULT_SETTINGS.model
+          : settings?.cloudModels?.[provider] || DEFAULT_SETTINGS.cloudModels[provider];
+      const requestId = generateId();
+      requestIdRef.current = requestId;
+      window.rag.deepReview(documentId, question, requestId, { provider, model });
+    },
+    [isStreaming, settings, setActiveConversationId]
+  );
 
   return {
     conversations,
@@ -266,5 +246,6 @@ export function useChat(activeConversationId, setActiveConversationId, settings,
     loadConversation,
     deleteConversation,
     moveConversation,
+    runDeepReview,
   };
 }

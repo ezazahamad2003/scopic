@@ -8,7 +8,9 @@ const ACCEPT_ATTR = [
   "text/plain", "text/csv",
 ].join(",");
 
-const MAX_DOC_CHARS = 12000;
+// No more truncation cap — documents go through the content-addressed
+// store now. The whole text gets chunked + indexed; retrieval picks what
+// to send the model per question.
 
 // Modal for creating or editing a project (case / matter / client).
 // `project` prop is the existing project (edit mode) or null (create mode).
@@ -48,38 +50,31 @@ export default function ProjectModal({ project, onSave, onDelete, onClose }) {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    if (!window.fileParser) return;
+    if (!window.documents) return;
     setParsing(file.name);
     try {
-      const ext = file.name.toLowerCase().slice(file.name.lastIndexOf("."));
-      let text = "";
-      if ([".pdf", ".docx", ".csv", ".tsv", ".xlsx", ".xls"].includes(ext)) {
-        const buf = await file.arrayBuffer();
-        const result = await window.fileParser.parse(buf, file.name);
-        if (result?.error) throw new Error(result.error);
-        text = result?.text || "";
-      } else {
-        text = await file.text();
-      }
-      const truncated = text.length > MAX_DOC_CHARS
-        ? text.slice(0, MAX_DOC_CHARS) + "\n\n[…truncated for context window…]"
-        : text;
+      const buf = await file.arrayBuffer();
+      const result = await window.documents.ingest(buf, file.name, file.type);
+      if (!result?.ok) throw new Error(result?.error || "Ingest failed");
+      const d = result.document;
       const doc = {
-        id: `doc-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        name: file.name,
-        text: truncated,
-        sizeBytes: file.size,
-        truncated: text.length > MAX_DOC_CHARS,
+        id: d.id,
+        name: d.filename,
+        sizeBytes: d.sizeBytes,
+        pageCount: d.pageCount,
+        extractedChars: d.extractedChars,
         addedAt: Date.now(),
       };
-      setForm((f) => ({ ...f, documents: [...f.documents, doc] }));
+      // Dedupe: ignore if this document id is already attached.
+      setForm((f) => f.documents.some((x) => x.id === doc.id)
+        ? f
+        : { ...f, documents: [...f.documents, doc] }
+      );
     } catch (err) {
-      // Surface a soft error inside the modal.
       const errDoc = {
         id: `doc-err-${Date.now()}`,
         name: file.name,
-        text: "",
-        error: err?.message || "Failed to parse",
+        error: err?.message || "Failed to ingest",
         addedAt: Date.now(),
       };
       setForm((f) => ({ ...f, documents: [...f.documents, errDoc] }));
@@ -215,8 +210,8 @@ export default function ProjectModal({ project, onSave, onDelete, onClose }) {
                     <span className="truncate flex-1">{doc.name}</span>
                     {doc.error ? (
                       <span className="text-[10px]" style={{ color: "#EF4444" }}>{doc.error}</span>
-                    ) : doc.truncated ? (
-                      <span className="text-[10px]" style={{ color: "#64748B" }} title={`${doc.sizeBytes || 0} bytes; truncated for context`}>truncated</span>
+                    ) : doc.pageCount ? (
+                      <span className="text-[10px]" style={{ color: "#64748B" }}>{doc.pageCount}p</span>
                     ) : null}
                     <button
                       type="button"

@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import MessageBubble from "./MessageBubble.jsx";
 import InputBar from "./InputBar.jsx";
 import ScopicLogo from "./ScopicLogo.jsx";
+import PrivacyChip from "./PrivacyChip.jsx";
 
 function greetingForNow() {
   const h = new Date().getHours();
@@ -48,11 +49,21 @@ export default function ChatArea({
   const showWelcome = messages.length === 0;
   const modeLabel = MODE_LABELS[activeMode];
 
+  const currentModel =
+    provider === "ollama"
+      ? settings?.model
+      : settings?.cloudModels?.[provider];
+
   return (
     <main
       className="flex flex-col flex-1 overflow-hidden"
       style={{ background: "var(--bg)" }}
     >
+      {/* Privacy / model chip — always visible above any chat content */}
+      <div className="flex justify-center pt-3 pb-1">
+        <PrivacyChip settings={settings} provider={provider} model={currentModel} />
+      </div>
+
       {/* Project context banner */}
       {activeProject && (
         <div
