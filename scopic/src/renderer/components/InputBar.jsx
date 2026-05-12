@@ -53,6 +53,8 @@ export default function InputBar({
   connected,
   activeMode,
   provider,
+  onOpenProjects,
+  onOpenWorkflows,
   settings,
   models,
   onChangeModel,
@@ -68,13 +70,10 @@ export default function InputBar({
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
       textareaRef.current.style.height =
-        Math.min(textareaRef.current.scrollHeight, 160) + "px";
+        Math.min(textareaRef.current.scrollHeight, 170) + "px";
     }
   }, [value]);
 
-  // When the parent drops a workflow draft into us, prefill the textarea,
-  // focus, and select the first "[bracketed placeholder]" so the user can
-  // type over it. Then notify the parent so the draft prop clears.
   useEffect(() => {
     if (!draft) return;
     setValue(draft);
@@ -163,17 +162,19 @@ export default function InputBar({
   const placeholder =
     activeMode === "document_review"
       ? connected
-        ? "Upload a document or paste contract text..."
+        ? "Ask a question about your documents..."
         : offlineHint
       : connected
-      ? "Ask Scopic about a matter, clause, filing, or workflow..."
+      ? "Ask a question about your documents..."
       : offlineHint;
 
+  const actionStyle = { color: "#8A93A6" };
+
   return (
-    <div className="px-5 py-4 border-t" style={{ background: "#FBFAF7", borderColor: "#E7E0D2" }}>
+    <div className="px-6 pt-3 pb-5" style={{ background: "#FBFAF7" }}>
       {!connected && (
         <div
-          className="mb-3 px-4 py-3 rounded-lg text-sm"
+          className="mx-auto mb-3 max-w-5xl px-4 py-3 rounded-lg text-sm"
           style={{ background: "#FFF7ED", border: "1px solid #FED7AA", color: "#9A3412" }}
         >
           {provider === "ollama" ? (
@@ -192,7 +193,7 @@ export default function InputBar({
       )}
 
       {attachedFile && (
-        <div className="mb-2 flex items-center gap-2">
+        <div className="mx-auto mb-2 flex max-w-5xl items-center gap-2">
           <div
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs"
             style={{
@@ -213,23 +214,9 @@ export default function InputBar({
       )}
 
       <div
-        className="flex items-end gap-3 rounded-xl px-4 py-3 shadow-sm"
+        className="mx-auto flex max-w-5xl flex-col gap-5 rounded-3xl px-5 py-5"
         style={{ background: "#FFFFFF", border: "1px solid #D8DEE8" }}
       >
-        <div className="hidden md:block mb-0.5">
-          <ModelPicker settings={settings} models={models} connected={connected} onChange={onChangeModel} />
-        </div>
-
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center mb-0.5 transition-all duration-150"
-          style={{ background: "#F8FAFC", border: "1px solid #D8DEE8", color: "#64748B" }}
-          title="Attach document"
-          type="button"
-        >
-          +
-        </button>
-
         <input ref={fileInputRef} type="file" className="hidden" accept={ACCEPT_ATTR} onChange={handleFileChange} />
 
         <textarea
@@ -240,40 +227,74 @@ export default function InputBar({
           placeholder={placeholder}
           disabled={!connected || isStreaming}
           rows={1}
-          className="flex-1 bg-transparent text-sm placeholder-gray-400 resize-none outline-none leading-relaxed"
-          style={{ maxHeight: 160, overflowY: "auto", color: "#1F2937" }}
+          className="w-full bg-transparent text-base placeholder-gray-400 resize-none outline-none leading-relaxed"
+          style={{ minHeight: 32, maxHeight: 170, overflowY: "auto", color: "#111827" }}
         />
 
-        <button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            if (isStreaming) onStop?.();
-            else handleSend();
-          }}
-          disabled={!isStreaming && !canSend}
-          className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-150 mb-0.5"
-          style={{
-            background: isStreaming ? "#DC2626" : canSend ? "#111827" : "#E5E7EB",
-            color: isStreaming || canSend ? "#FFFFFF" : "#94A3B8",
-            cursor: isStreaming || canSend ? "pointer" : "not-allowed",
-          }}
-          title={isStreaming ? "Stop response" : "Send"}
-        >
-          {isStreaming ? (
-            <div className="w-3 h-3 rounded-sm" style={{ background: "#FFFFFF" }} />
-          ) : (
-            <span style={{ fontSize: 15, lineHeight: 1 }}>↑</span>
-          )}
-        </button>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-5">
+            <button
+              onClick={() => {
+                fileInputRef.current?.click();
+              }}
+              className="text-sm font-medium transition-colors hover:text-[#315A98]"
+              style={actionStyle}
+              title="Add documents"
+              type="button"
+            >
+              + Documents
+            </button>
+            <button
+              onClick={onOpenProjects}
+              className="text-sm font-medium transition-colors hover:text-[#315A98]"
+              style={actionStyle}
+              title="Open projects"
+              type="button"
+            >
+              Projects
+            </button>
+            <button
+              onClick={onOpenWorkflows}
+              className="text-sm font-medium transition-colors hover:text-[#315A98]"
+              style={actionStyle}
+              title="Open workflows"
+              type="button"
+            >
+              Workflows
+            </button>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-3">
+            <ModelPicker settings={settings} models={models} connected={connected} onChange={onChangeModel} />
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                if (isStreaming) onStop?.();
+                else handleSend();
+              }}
+              disabled={!isStreaming && !canSend}
+              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl transition-all duration-150"
+              style={{
+                background: isStreaming ? "#DC2626" : canSend ? "#111827" : "#E5E7EB",
+                color: isStreaming || canSend ? "#FFFFFF" : "#94A3B8",
+                cursor: isStreaming || canSend ? "pointer" : "not-allowed",
+                boxShadow: canSend ? "0 8px 18px rgba(17, 24, 39, 0.2)" : "none",
+              }}
+              title={isStreaming ? "Stop response" : "Send"}
+            >
+              {isStreaming ? (
+                <div className="w-3 h-3 rounded-sm" style={{ background: "#FFFFFF" }} />
+              ) : (
+                <span style={{ fontSize: 18, lineHeight: 1 }}>-&gt;</span>
+              )}
+            </button>
+          </div>
+        </div>
       </div>
 
-      <div className="mt-2 md:hidden">
-        <ModelPicker settings={settings} models={models} connected={connected} onChange={onChangeModel} />
-      </div>
-
-      <p className="text-center text-xs mt-2" style={{ color: "#8A8174" }}>
-        Scopic provides legal information, not legal advice. Review outputs with a qualified professional.
+      <p className="text-center text-xs mt-3" style={{ color: "#6B7280" }}>
+        AI can make mistakes. Answers are not legal advice.
       </p>
     </div>
   );

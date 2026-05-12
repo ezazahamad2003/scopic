@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import MessageBubble from "./MessageBubble.jsx";
 import InputBar from "./InputBar.jsx";
-import WelcomeScreen from "./WelcomeScreen.jsx";
 
 const MODE_LABELS = {
   document_review: "Document Review",
@@ -20,6 +19,8 @@ export default function ChatArea({
   provider,
   activeProject,
   onClearProject,
+  onOpenProjects,
+  onOpenWorkflows,
   settings,
   models,
   onChangeModel,
@@ -90,16 +91,27 @@ export default function ChatArea({
         </div>
       )}
 
-      {/* Messages area */}
-      <div className="flex-1 overflow-y-auto">
-        {showWelcome ? (
-          <WelcomeScreen
-            onSuggestion={onSend}
-            onSetMode={onSetMode}
-            onRunPipeline={onRunPipeline}
-            onPickWorkflow={onPickWorkflow}
+      {showWelcome ? (
+        <div className="flex flex-1 flex-col justify-center pb-16">
+          <InputBar
+            onSend={onSend}
+            onStop={onStop}
+            isStreaming={isStreaming}
+            connected={connected}
+            activeMode={activeMode}
+            provider={provider}
+            onOpenProjects={onOpenProjects}
+            onOpenWorkflows={onOpenWorkflows}
+            draft={draft}
+            onDraftConsumed={onDraftConsumed}
+            settings={settings}
+            models={models}
+            onChangeModel={onChangeModel}
           />
-        ) : (
+        </div>
+      ) : (
+        <>
+          <div className="flex-1 overflow-y-auto">
           <div className="max-w-3xl mx-auto px-6 py-6">
             {messages.map((msg, idx) => {
               const isLast = idx === messages.length - 1;
@@ -115,23 +127,25 @@ export default function ChatArea({
             })}
             <div ref={bottomRef} />
           </div>
-        )}
-      </div>
+          </div>
 
-      {/* Input bar */}
-      <InputBar
-        onSend={onSend}
-        onStop={onStop}
-        isStreaming={isStreaming}
-        connected={connected}
-        activeMode={activeMode}
-        provider={provider}
-        draft={draft}
-        onDraftConsumed={onDraftConsumed}
-        settings={settings}
-        models={models}
-        onChangeModel={onChangeModel}
-      />
+          <InputBar
+            onSend={onSend}
+            onStop={onStop}
+            isStreaming={isStreaming}
+            connected={connected}
+            activeMode={activeMode}
+            provider={provider}
+            onOpenProjects={onOpenProjects}
+            onOpenWorkflows={onOpenWorkflows}
+            draft={draft}
+            onDraftConsumed={onDraftConsumed}
+            settings={settings}
+            models={models}
+            onChangeModel={onChangeModel}
+          />
+        </>
+      )}
     </main>
   );
 }

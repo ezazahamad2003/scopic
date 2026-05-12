@@ -241,6 +241,8 @@ export default function App() {
             onChangeModel={handleChangeModel}
             activeProject={activeProject}
             onClearProject={() => setActiveProjectId(null)}
+            onOpenProjects={() => setActiveView("projects")}
+            onOpenWorkflows={() => setActiveView("workflows")}
             onRunPipeline={handleRunPipeline}
             onPickWorkflow={handlePickWorkflow}
             draft={pendingDraft}

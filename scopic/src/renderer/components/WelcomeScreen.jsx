@@ -7,40 +7,17 @@ const TRENDING_QUESTIONS = [
   "How do I protect my IP before raising capital?",
 ];
 
-function getGreeting() {
-  const h = new Date().getHours();
-  if (h < 5) return "Working late?";
-  if (h < 12) return "Good morning";
-  if (h < 17) return "Good afternoon";
-  if (h < 22) return "Good evening";
-  return "Working late?";
-}
-
 export default function WelcomeScreen({ onSuggestion, onSetMode, onRunPipeline, onPickWorkflow }) {
   return (
-    <div className="flex flex-col items-center justify-start h-full px-8 pt-12 pb-12 overflow-y-auto select-none">
-      <p className="text-xs font-bold tracking-[0.2em] uppercase mb-3" style={{ color: "#C9A55C" }}>
-        {getGreeting()}
-      </p>
-      <h1
-        className="text-3xl font-semibold mb-2 text-center"
-        style={{ color: "#1F2937" }}
-      >
-        How can I help you today?
-      </h1>
-      <p className="text-sm mb-10 text-center" style={{ color: "#64748B" }}>
-        Choose a starting point or ask anything
-      </p>
-
-      {/* Feature cards */}
-      <div className="grid grid-cols-2 gap-4 w-full max-w-2xl mb-8">
-        {/* Document Review card */}
+    <div className="flex flex-col items-center justify-start h-full px-8 pt-8 pb-8 overflow-y-auto select-none">
+      <div className="flex flex-wrap justify-center gap-2 w-full max-w-2xl mb-6">
         <button
           onClick={() => onSetMode("document_review")}
-          className="text-left p-6 rounded-2xl transition-all duration-150"
+          className="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150"
           style={{
             background: "#FFFFFF",
             border: "1px solid #D8DEE8",
+            color: "#315A98",
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.borderColor = "#315A98";
@@ -51,62 +28,36 @@ export default function WelcomeScreen({ onSuggestion, onSetMode, onRunPipeline, 
             e.currentTarget.style.background = "#FFFFFF";
           }}
         >
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-xl">⚖️</span>
-          </div>
-          <div
-            className="text-base font-semibold mb-2"
-            style={{ color: "#315A98" }}
-          >
-            Document Review
-          </div>
-          <div className="text-sm leading-relaxed" style={{ color: "#64748B" }}>
-            Upload a contract and the AI can identify risks, analyze clauses and
-            suggest improvements based on the prompt of your choice
-          </div>
+          Document review
         </button>
-
-        {/* Legal Questions card */}
         <button
           onClick={() => onSetMode("general")}
-          className="text-left p-6 rounded-2xl transition-all duration-150"
+          className="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150"
           style={{
             background: "#FFFFFF",
             border: "1px solid #D8DEE8",
+            color: "#315A98",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "#94A3B8";
-            e.currentTarget.style.background = "#FFFFFF";
+            e.currentTarget.style.borderColor = "#315A98";
+            e.currentTarget.style.background = "#F8FAFC";
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.borderColor = "#D8DEE8";
             e.currentTarget.style.background = "#FFFFFF";
           }}
         >
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-xl">💡</span>
-          </div>
-          <div
-            className="text-base font-semibold mb-2"
-            style={{ color: "#315A98" }}
-          >
-            Legal Questions
-          </div>
-          <div className="text-sm leading-relaxed" style={{ color: "#64748B" }}>
-            Ask about fundraising, employment, contracts, IP, or any startup
-            legal topic
-          </div>
+          Legal question
         </button>
       </div>
 
-      {/* Pipelines (multi-step) */}
       {onRunPipeline && WORKFLOW_PIPELINES?.length > 0 && (
         <div className="w-full max-w-2xl mb-8">
           <div
             className="text-xs font-semibold tracking-widest mb-3 uppercase"
             style={{ color: "#94A3B8" }}
           >
-            Pipelines · multi-step
+            Pipelines - multi-step
           </div>
           <div className="grid grid-cols-1 gap-2">
             {WORKFLOW_PIPELINES.map((pl) => (
@@ -136,14 +87,13 @@ export default function WelcomeScreen({ onSuggestion, onSetMode, onRunPipeline, 
                     {pl.blurb}
                   </div>
                 </div>
-                <span className="text-xs" style={{ color: "#315A98" }}>Run →</span>
+                <span className="text-xs" style={{ color: "#315A98" }}>Run -&gt;</span>
               </button>
             ))}
           </div>
         </div>
       )}
 
-      {/* Workflows gallery */}
       <div className="w-full max-w-2xl mb-8">
         <div
           className="text-xs font-semibold tracking-widest mb-3 uppercase"
@@ -184,7 +134,6 @@ export default function WelcomeScreen({ onSuggestion, onSetMode, onRunPipeline, 
         </div>
       </div>
 
-      {/* Trending questions */}
       <div className="w-full max-w-2xl">
         <div
           className="text-xs font-semibold tracking-widest mb-3 uppercase"
