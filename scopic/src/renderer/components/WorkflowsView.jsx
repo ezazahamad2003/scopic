@@ -6,12 +6,12 @@ import { WORKFLOWS, WORKFLOW_PIPELINES } from "../utils/constants.js";
 // pipelines open the WorkflowRunner.
 export default function WorkflowsView({ onPickWorkflow, onRunPipeline }) {
   return (
-    <main className="flex flex-col flex-1 overflow-hidden" style={{ background: "#0D1117" }}>
-      <div className="px-8 py-6 border-b" style={{ borderColor: "#1E2535" }}>
-        <h1 className="text-xl font-semibold" style={{ fontFamily: "DM Serif Display, serif", color: "#E8E8E8" }}>
+    <main className="flex flex-col flex-1 overflow-hidden" style={{ background: "#FBFAF7" }}>
+      <div className="px-8 py-6 border-b" style={{ borderColor: "#F8FAFC" }}>
+        <h1 className="text-xl font-semibold" style={{ fontFamily: "DM Serif Display, serif", color: "#1F2937" }}>
           Workflows
         </h1>
-        <p className="text-xs mt-0.5" style={{ color: "#6B7280" }}>
+        <p className="text-xs mt-0.5" style={{ color: "#64748B" }}>
           Pre-built legal flows. One-shot prompts drop into chat. Multi-step pipelines run sequentially with streamed outputs.
         </p>
       </div>
@@ -20,7 +20,7 @@ export default function WorkflowsView({ onPickWorkflow, onRunPipeline }) {
         {/* Multi-step pipelines */}
         {WORKFLOW_PIPELINES?.length > 0 && (
           <section className="mb-8 max-w-5xl">
-            <h2 className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: "#7BA4FF" }}>
+            <h2 className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: "#315A98" }}>
               Pipelines · multi-step
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -30,26 +30,26 @@ export default function WorkflowsView({ onPickWorkflow, onRunPipeline }) {
                   onClick={() => onRunPipeline(pl)}
                   className="text-left p-4 rounded-xl transition-all"
                   style={{
-                    background: "#0F1726",
-                    border: "1px solid #1E3060",
+                    background: "#FFFFFF",
+                    border: "1px solid #D8DEE8",
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#3A5A9F"; e.currentTarget.style.background = "#13203A"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#1E3060"; e.currentTarget.style.background = "#0F1726"; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#315A98"; e.currentTarget.style.background = "#F8FAFC"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#D8DEE8"; e.currentTarget.style.background = "#FFFFFF"; }}
                 >
                   <div className="flex items-start gap-3">
                     <span className="text-xl mt-0.5">{pl.icon}</span>
                     <div className="flex-1">
-                      <div className="text-sm font-semibold mb-1" style={{ color: "#7BA4FF" }}>
+                      <div className="text-sm font-semibold mb-1" style={{ color: "#315A98" }}>
                         {pl.title}
                       </div>
-                      <div className="text-xs leading-snug" style={{ color: "#9AA0B4" }}>
+                      <div className="text-xs leading-snug" style={{ color: "#475569" }}>
                         {pl.blurb}
                       </div>
-                      <div className="text-[11px] mt-2" style={{ color: "#4A5568" }}>
+                      <div className="text-[11px] mt-2" style={{ color: "#94A3B8" }}>
                         {pl.steps.length} steps · {pl.inputs.length} input{pl.inputs.length === 1 ? "" : "s"}
                       </div>
                     </div>
-                    <span className="text-xs" style={{ color: "#7BA4FF" }}>Run →</span>
+                    <span className="text-xs" style={{ color: "#315A98" }}>Run →</span>
                   </div>
                 </button>
               ))}
@@ -59,7 +59,7 @@ export default function WorkflowsView({ onPickWorkflow, onRunPipeline }) {
 
         {/* Single-prompt workflows */}
         <section className="max-w-5xl">
-          <h2 className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: "#C9A55C" }}>
+          <h2 className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: "#315A98" }}>
             Quick prompts
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -69,19 +69,19 @@ export default function WorkflowsView({ onPickWorkflow, onRunPipeline }) {
                 onClick={() => onPickWorkflow(wf)}
                 className="text-left p-4 rounded-xl transition-all"
                 style={{
-                  background: "#141820",
-                  border: "1px solid #2A3347",
+                  background: "#FFFFFF",
+                  border: "1px solid #D8DEE8",
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#C9A55C66"; e.currentTarget.style.background = "#161B27"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#2A3347"; e.currentTarget.style.background = "#141820"; }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#315A9866"; e.currentTarget.style.background = "#FFFFFF"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#D8DEE8"; e.currentTarget.style.background = "#FFFFFF"; }}
               >
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-base">{wf.icon}</span>
-                  <span className="text-sm font-medium" style={{ color: "#E2E8F0" }}>
+                  <span className="text-sm font-medium" style={{ color: "#1F2937" }}>
                     {wf.title}
                   </span>
                 </div>
-                <div className="text-xs leading-snug" style={{ color: "#6B7280" }}>
+                <div className="text-xs leading-snug" style={{ color: "#64748B" }}>
                   {wf.blurb}
                 </div>
               </button>

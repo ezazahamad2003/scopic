@@ -140,33 +140,33 @@ export default function WorkflowRunner({ pipeline, settings, onClose, onSaveAsCo
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
+      style={{ background: "rgba(15,23,42,0.28)", backdropFilter: "blur(4px)" }}
       onClick={handleBackdrop}
     >
       <div
         className="w-full max-w-3xl rounded-2xl shadow-2xl flex flex-col"
         style={{
-          background: "#161B27",
-          border: "1px solid #2A3347",
-          boxShadow: "0 24px 64px rgba(0,0,0,0.6)",
+          background: "#FFFFFF",
+          border: "1px solid #D8DEE8",
+          boxShadow: "0 24px 64px rgba(15,23,42,0.16)",
           maxHeight: "90vh",
         }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b" style={{ borderColor: "#2A3347" }}>
+        <div className="flex items-center justify-between p-5 border-b" style={{ borderColor: "#D8DEE8" }}>
           <div className="flex items-center gap-3">
             <span className="text-2xl">{pipeline.icon}</span>
             <div>
-              <h2 className="text-lg font-semibold" style={{ fontFamily: "DM Serif Display, serif", color: "#C9A55C" }}>
+              <h2 className="text-lg font-semibold" style={{ fontFamily: "DM Serif Display, serif", color: "#315A98" }}>
                 {pipeline.title}
               </h2>
-              <p className="text-xs" style={{ color: "#6B7280" }}>{pipeline.blurb}</p>
+              <p className="text-xs" style={{ color: "#64748B" }}>{pipeline.blurb}</p>
             </div>
           </div>
           <button
             onClick={onClose}
             disabled={phase === "running"}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-[#2A3347] transition-colors disabled:opacity-40"
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-[#D8DEE8] transition-colors disabled:opacity-40"
             title={phase === "running" ? "Stop the run first" : "Close"}
           >
             ✕
@@ -178,12 +178,12 @@ export default function WorkflowRunner({ pipeline, settings, onClose, onSaveAsCo
           {/* Inputs */}
           {phase === "idle" && (
             <div className="space-y-3">
-              <div className="text-xs font-medium uppercase tracking-wide" style={{ color: "#6B7280" }}>
+              <div className="text-xs font-medium uppercase tracking-wide" style={{ color: "#64748B" }}>
                 Inputs
               </div>
               {pipeline.inputs.map((inp) => (
                 <div key={inp.id}>
-                  <label className="block text-xs font-medium mb-1" style={{ color: "#9AA0B4" }}>
+                  <label className="block text-xs font-medium mb-1" style={{ color: "#475569" }}>
                     {inp.label}
                   </label>
                   {inp.multiline ? (
@@ -193,7 +193,7 @@ export default function WorkflowRunner({ pipeline, settings, onClose, onSaveAsCo
                       onChange={(e) => setInputs((s) => ({ ...s, [inp.id]: e.target.value }))}
                       placeholder={inp.placeholder}
                       className="w-full px-3 py-2 rounded-lg text-sm outline-none resize-y font-mono"
-                      style={{ background: "#0F1117", border: "1px solid #2A3347", color: "#E8E8E8" }}
+                      style={{ background: "#FFFFFF", border: "1px solid #D8DEE8", color: "#1F2937" }}
                     />
                   ) : (
                     <input
@@ -202,12 +202,12 @@ export default function WorkflowRunner({ pipeline, settings, onClose, onSaveAsCo
                       onChange={(e) => setInputs((s) => ({ ...s, [inp.id]: e.target.value }))}
                       placeholder={inp.placeholder}
                       className="w-full px-3 py-2 rounded-lg text-sm outline-none"
-                      style={{ background: "#0F1117", border: "1px solid #2A3347", color: "#E8E8E8" }}
+                      style={{ background: "#FFFFFF", border: "1px solid #D8DEE8", color: "#1F2937" }}
                     />
                   )}
                 </div>
               ))}
-              <div className="text-xs" style={{ color: "#6B7280" }}>
+              <div className="text-xs" style={{ color: "#64748B" }}>
                 Pipeline runs {pipeline.steps.length} steps sequentially through your active provider
                 ({settings?.provider === "ollama" ? "Ollama" : (settings?.provider || "ollama").toUpperCase()}).
               </div>
@@ -226,28 +226,28 @@ export default function WorkflowRunner({ pipeline, settings, onClose, onSaveAsCo
                 key={step.id}
                 className="rounded-lg p-4"
                 style={{
-                  background: "#0F1117",
-                  border: `1px solid ${isCurrent ? "#C9A55C66" : "#2A3347"}`,
+                  background: "#FFFFFF",
+                  border: `1px solid ${isCurrent ? "#315A9866" : "#D8DEE8"}`,
                 }}
               >
                 <div className="flex items-center gap-2 mb-2">
                   <div
                     className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
                     style={{
-                      background: isDone ? "#22C55E" : isCurrent ? "#C9A55C" : "#2A3347",
-                      color: isDone || isCurrent ? "#0F1117" : "#6B7280",
+                      background: isDone ? "#22C55E" : isCurrent ? "#315A98" : "#D8DEE8",
+                      color: isDone || isCurrent ? "#FFFFFF" : "#64748B",
                     }}
                   >
                     {isDone ? "✓" : idx + 1}
                   </div>
-                  <span className="text-sm font-medium" style={{ color: "#E2E8F0" }}>
+                  <span className="text-sm font-medium" style={{ color: "#1F2937" }}>
                     {step.title}
                   </span>
                   {isCurrent && (
-                    <span className="text-xs ml-auto" style={{ color: "#C9A55C" }}>streaming…</span>
+                    <span className="text-xs ml-auto" style={{ color: "#315A98" }}>streaming…</span>
                   )}
                   {isPending && (
-                    <span className="text-xs ml-auto" style={{ color: "#4A5568" }}>pending</span>
+                    <span className="text-xs ml-auto" style={{ color: "#94A3B8" }}>pending</span>
                   )}
                 </div>
                 {error ? (
@@ -255,7 +255,7 @@ export default function WorkflowRunner({ pipeline, settings, onClose, onSaveAsCo
                 ) : output ? (
                   <div
                     className="text-sm leading-relaxed prose-sm"
-                    style={{ color: "#C8D0E0" }}
+                    style={{ color: "#334155" }}
                     dangerouslySetInnerHTML={{ __html: renderMarkdown(output) }}
                   />
                 ) : null}
@@ -265,13 +265,13 @@ export default function WorkflowRunner({ pipeline, settings, onClose, onSaveAsCo
         </div>
 
         {/* Footer actions */}
-        <div className="p-5 border-t flex gap-3" style={{ borderColor: "#2A3347" }}>
+        <div className="p-5 border-t flex gap-3" style={{ borderColor: "#D8DEE8" }}>
           {phase === "idle" && (
             <>
               <button
                 onClick={onClose}
                 className="flex-1 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition-colors"
-                style={{ background: "#0F1117", border: "1px solid #2A3347" }}
+                style={{ background: "#FFFFFF", border: "1px solid #D8DEE8" }}
               >
                 Cancel
               </button>
@@ -280,8 +280,8 @@ export default function WorkflowRunner({ pipeline, settings, onClose, onSaveAsCo
                 disabled={!allInputsFilled}
                 className="flex-1 py-2.5 rounded-lg text-sm font-medium transition-all disabled:opacity-50"
                 style={{
-                  background: "linear-gradient(135deg, #C9A55C, #A8874A)",
-                  color: "#0F1117",
+                  background: "linear-gradient(135deg, #315A98, #244876)",
+                  color: "#FFFFFF",
                 }}
               >
                 Run pipeline
@@ -302,7 +302,7 @@ export default function WorkflowRunner({ pipeline, settings, onClose, onSaveAsCo
               <button
                 onClick={onClose}
                 className="flex-1 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition-colors"
-                style={{ background: "#0F1117", border: "1px solid #2A3347" }}
+                style={{ background: "#FFFFFF", border: "1px solid #D8DEE8" }}
               >
                 Close
               </button>
@@ -311,8 +311,8 @@ export default function WorkflowRunner({ pipeline, settings, onClose, onSaveAsCo
                   onClick={handleSaveAsConversation}
                   className="flex-1 py-2.5 rounded-lg text-sm font-medium transition-all"
                   style={{
-                    background: "linear-gradient(135deg, #C9A55C, #A8874A)",
-                    color: "#0F1117",
+                    background: "linear-gradient(135deg, #315A98, #244876)",
+                    color: "#FFFFFF",
                   }}
                 >
                   Save & open in chat

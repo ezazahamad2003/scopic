@@ -20,6 +20,9 @@ export default function ChatArea({
   provider,
   activeProject,
   onClearProject,
+  settings,
+  models,
+  onChangeModel,
   onRunPipeline,
   onPickWorkflow,
   draft,
@@ -37,21 +40,21 @@ export default function ChatArea({
   return (
     <main
       className="flex flex-col flex-1 overflow-hidden"
-      style={{ background: "#0D1117" }}
+      style={{ background: "#FBFAF7" }}
     >
       {/* Project context banner */}
       {activeProject && (
         <div
           className="flex items-center justify-center gap-2 py-1.5 text-xs font-medium border-b"
           style={{
-            background: "#1A1530",
-            borderColor: "#3A2E60",
-            color: "#B5A3FF",
+            background: "#F8FAFC",
+            borderColor: "#D8DEE8",
+            color: "#315A98",
           }}
         >
           <span
             className="w-2 h-2 rounded-full"
-            style={{ background: activeProject.color || "#B5A3FF" }}
+            style={{ background: activeProject.color || "#315A98" }}
           />
           <span>Project: {activeProject.name}</span>
           {onClearProject && (
@@ -72,8 +75,8 @@ export default function ChatArea({
           className="flex items-center justify-center gap-2 py-1.5 text-xs font-medium border-b"
           style={{
             background: "#0D1528",
-            borderColor: "#1E3060",
-            color: "#7BA4FF",
+            borderColor: "#D6E1F5",
+            color: "#315A98",
           }}
         >
           <span>⚖️</span>
@@ -125,6 +128,9 @@ export default function ChatArea({
         provider={provider}
         draft={draft}
         onDraftConsumed={onDraftConsumed}
+        settings={settings}
+        models={models}
+        onChangeModel={onChangeModel}
       />
     </main>
   );

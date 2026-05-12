@@ -84,14 +84,14 @@ export default function SettingsModal({ settings, models, onSave, onClose, updat
   const updError = updateState?.error;
 
   let updateLine = "You're up to date.";
-  let updateColor = "#6B7280";
-  if (updStatus === "checking") { updateLine = "Checking for updates…"; updateColor = "#7BA4FF"; }
-  else if (updStatus === "available") { updateLine = `Update available: v${updVersion}`; updateColor = "#7BA4FF"; }
-  else if (updStatus === "downloading") { updateLine = `Downloading… ${Math.round(updProgress)}%`; updateColor = "#7BA4FF"; }
+  let updateColor = "#64748B";
+  if (updStatus === "checking") { updateLine = "Checking for updates…"; updateColor = "#315A98"; }
+  else if (updStatus === "available") { updateLine = `Update available: v${updVersion}`; updateColor = "#315A98"; }
+  else if (updStatus === "downloading") { updateLine = `Downloading… ${Math.round(updProgress)}%`; updateColor = "#315A98"; }
   else if (updStatus === "downloaded") { updateLine = `v${updVersion} ready to install`; updateColor = "#10B981"; }
   else if (updStatus === "error") { updateLine = `Update error: ${updError || "unknown"}`; updateColor = "#EF4444"; }
-  else if (checkResult?.skipped) { updateLine = `Update check skipped (${checkResult.reason || "unknown"})`; updateColor = "#9AA0B4"; }
-  else if (checkResult?.ok && checkResult?.updateInfo && checkResult.updateInfo.version !== version) { updateLine = `Update available: v${checkResult.updateInfo.version}`; updateColor = "#7BA4FF"; }
+  else if (checkResult?.skipped) { updateLine = `Update check skipped (${checkResult.reason || "unknown"})`; updateColor = "#475569"; }
+  else if (checkResult?.ok && checkResult?.updateInfo && checkResult.updateInfo.version !== version) { updateLine = `Update available: v${checkResult.updateInfo.version}`; updateColor = "#315A98"; }
   else if (checkResult?.ok) { updateLine = "You're on the latest version."; updateColor = "#10B981"; }
   else if (checkResult?.error) { updateLine = `Check failed: ${checkResult.error}`; updateColor = "#EF4444"; }
 
@@ -124,27 +124,27 @@ export default function SettingsModal({ settings, models, onSave, onClose, updat
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
+      style={{ background: "rgba(15,23,42,0.28)", backdropFilter: "blur(4px)" }}
       onClick={handleBackdrop}
     >
       <div
         className="w-full max-w-lg rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto"
         style={{
-          background: "#161B27",
-          border: "1px solid #2A3347",
-          boxShadow: "0 24px 64px rgba(0,0,0,0.6)",
+          background: "#FFFFFF",
+          border: "1px solid #D8DEE8",
+          boxShadow: "0 24px 64px rgba(15,23,42,0.16)",
         }}
       >
         <div className="flex items-center justify-between mb-6">
           <h2
             className="text-xl font-semibold"
-            style={{ fontFamily: "DM Serif Display, serif", color: "#C9A55C" }}
+            style={{ fontFamily: "DM Serif Display, serif", color: "#315A98" }}
           >
             Settings
           </h2>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-[#2A3347] transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-[#D8DEE8] transition-colors"
           >
             ✕
           </button>
@@ -165,15 +165,15 @@ export default function SettingsModal({ settings, models, onSave, onClose, updat
                   onClick={() => setForm((f) => ({ ...f, provider: p.id }))}
                   className="text-left px-3 py-2.5 rounded-lg text-xs transition-colors"
                   style={{
-                    background: active ? "#1E2535" : "#0F1117",
-                    border: active ? "1px solid #C9A55C66" : "1px solid #2A3347",
-                    color: active ? "#E8E8E8" : "#9AA0B4",
+                    background: active ? "#F8FAFC" : "#FFFFFF",
+                    border: active ? "1px solid #315A9866" : "1px solid #D8DEE8",
+                    color: active ? "#1F2937" : "#475569",
                   }}
                 >
-                  <div className="font-medium" style={{ color: active ? "#C9A55C" : "#E8E8E8" }}>
+                  <div className="font-medium" style={{ color: active ? "#315A98" : "#1F2937" }}>
                     {p.label}
                   </div>
-                  <div className="text-[10px] mt-0.5 leading-tight" style={{ color: "#6B7280" }}>
+                  <div className="text-[10px] mt-0.5 leading-tight" style={{ color: "#64748B" }}>
                     {p.description}
                   </div>
                 </button>
@@ -191,7 +191,7 @@ export default function SettingsModal({ settings, models, onSave, onClose, updat
                 value={form.ollamaUrl}
                 onChange={(e) => setForm((f) => ({ ...f, ollamaUrl: e.target.value }))}
                 className="w-full px-3 py-2.5 rounded-lg text-sm outline-none"
-                style={{ background: "#0F1117", border: "1px solid #2A3347", color: "#E8E8E8" }}
+                style={{ background: "#FFFFFF", border: "1px solid #D8DEE8", color: "#1F2937" }}
               />
             </Field>
 
@@ -210,8 +210,8 @@ export default function SettingsModal({ settings, models, onSave, onClose, updat
                 onChange={(e) => setForm((f) => ({ ...f, model: e.target.value }))}
                 className="w-full px-3 py-2.5 rounded-lg text-sm outline-none appearance-none disabled:opacity-50"
                 style={{
-                  background: "#0F1117", border: "1px solid #2A3347",
-                  color: "#E8E8E8", cursor: "pointer",
+                  background: "#FFFFFF", border: "1px solid #D8DEE8",
+                  color: "#1F2937", cursor: "pointer",
                 }}
                 disabled={providerModels.length === 0}
               >
@@ -244,13 +244,13 @@ export default function SettingsModal({ settings, models, onSave, onClose, updat
                   }
                   placeholder={placeholderForProvider(provider)}
                   className="flex-1 px-3 py-2.5 rounded-lg text-sm outline-none font-mono"
-                  style={{ background: "#0F1117", border: "1px solid #2A3347", color: "#E8E8E8" }}
+                  style={{ background: "#FFFFFF", border: "1px solid #D8DEE8", color: "#1F2937" }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowKey((s) => ({ ...s, [provider]: !s[provider] }))}
                   className="px-3 rounded-lg text-xs"
-                  style={{ background: "#0F1117", border: "1px solid #2A3347", color: "#9AA0B4" }}
+                  style={{ background: "#FFFFFF", border: "1px solid #D8DEE8", color: "#475569" }}
                 >
                   {showKey[provider] ? "Hide" : "Show"}
                 </button>
@@ -271,8 +271,8 @@ export default function SettingsModal({ settings, models, onSave, onClose, updat
                 }
                 className="w-full px-3 py-2.5 rounded-lg text-sm outline-none appearance-none"
                 style={{
-                  background: "#0F1117", border: "1px solid #2A3347",
-                  color: "#E8E8E8", cursor: "pointer",
+                  background: "#FFFFFF", border: "1px solid #D8DEE8",
+                  color: "#1F2937", cursor: "pointer",
                 }}
               >
                 {providerModels.map((m) => (
@@ -283,15 +283,15 @@ export default function SettingsModal({ settings, models, onSave, onClose, updat
           </div>
         )}
 
-        {/* About & Updates */}
-        <div className="mt-6 pt-5 border-t" style={{ borderColor: "#2A3347" }}>
+{/* About & Updates */}
+        <div className="mt-6 pt-5 border-t" style={{ borderColor: "#D8DEE8" }}>
           <label className="block text-xs font-medium text-gray-400 mb-3 uppercase tracking-wide">
             About & Updates
           </label>
-          <div className="rounded-lg p-3" style={{ background: "#0F1117", border: "1px solid #2A3347" }}>
+          <div className="rounded-lg p-3" style={{ background: "#FFFFFF", border: "1px solid #D8DEE8" }}>
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs text-gray-400">Current version</span>
-              <span className="text-sm font-mono" style={{ color: "#E8E8E8" }}>
+              <span className="text-sm font-mono" style={{ color: "#1F2937" }}>
                 v{version || "…"}{!isPackaged && " (dev)"}
               </span>
             </div>
@@ -304,7 +304,7 @@ export default function SettingsModal({ settings, models, onSave, onClose, updat
                 onClick={handleCheckForUpdates}
                 disabled={checking || updStatus === "checking" || updStatus === "downloading"}
                 className="flex-1 py-2 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
-                style={{ background: "#1E2535", border: "1px solid #2A3347", color: "#E8E8E8" }}
+                style={{ background: "#F8FAFC", border: "1px solid #D8DEE8", color: "#1F2937" }}
               >
                 {checking ? "Checking…" : "Check for updates"}
               </button>
@@ -325,7 +325,7 @@ export default function SettingsModal({ settings, models, onSave, onClose, updat
           <button
             onClick={onClose}
             className="flex-1 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition-colors"
-            style={{ background: "#0F1117", border: "1px solid #2A3347" }}
+            style={{ background: "#FFFFFF", border: "1px solid #D8DEE8" }}
           >
             Cancel
           </button>
@@ -333,8 +333,8 @@ export default function SettingsModal({ settings, models, onSave, onClose, updat
             onClick={handleSave}
             className="flex-1 py-2.5 rounded-lg text-sm font-medium transition-all"
             style={{
-              background: "linear-gradient(135deg, #C9A55C, #A8874A)",
-              color: "#0F1117",
+              background: "linear-gradient(135deg, #315A98, #244876)",
+              color: "#FFFFFF",
             }}
           >
             Save Settings

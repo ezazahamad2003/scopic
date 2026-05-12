@@ -85,39 +85,39 @@ export default function DocumentVaultModal({ onClose, onSubmit }) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
+      style={{ background: "rgba(15,23,42,0.28)", backdropFilter: "blur(4px)" }}
       onClick={onClose}
     >
       <div
         className="rounded-2xl p-6 w-full max-w-lg mx-4"
-        style={{ background: "#141820", border: "1px solid #2A3347" }}
+        style={{ background: "#FFFFFF", border: "1px solid #D8DEE8" }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <span className="text-xl">📁</span>
-            <h2 className="text-lg font-semibold" style={{ color: "#E2E8F0" }}>
+            <h2 className="text-lg font-semibold" style={{ color: "#1F2937" }}>
               Document Vault
             </h2>
           </div>
           <button
             onClick={onClose}
             className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
-            style={{ color: "#6B7280" }}
+            style={{ color: "#64748B" }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#1E2535";
-              e.currentTarget.style.color = "#E2E8F0";
+              e.currentTarget.style.background = "#F8FAFC";
+              e.currentTarget.style.color = "#1F2937";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = "transparent";
-              e.currentTarget.style.color = "#6B7280";
+              e.currentTarget.style.color = "#64748B";
             }}
           >
             ✕
           </button>
         </div>
 
-        <p className="text-sm mb-4" style={{ color: "#6B7280" }}>
+        <p className="text-sm mb-4" style={{ color: "#64748B" }}>
           Upload a document and ask a question. The AI will use it as context for the chat.
         </p>
 
@@ -132,12 +132,12 @@ export default function DocumentVaultModal({ onClose, onSubmit }) {
           onClick={() => fileInputRef.current?.click()}
           className="rounded-xl p-6 mb-3 text-center cursor-pointer transition-all duration-150"
           style={{
-            background: dragOver ? "#1a2540" : "#0D1117",
-            border: `1px dashed ${dragOver ? "#3A5A9F" : "#2A3347"}`,
+            background: dragOver ? "#EEF6FF" : "#FBFAF7",
+            border: `1px dashed ${dragOver ? "#3A5A9F" : "#D8DEE8"}`,
           }}
         >
           {file ? (
-            <div className="flex items-center justify-center gap-2 text-sm" style={{ color: "#7BA4FF" }}>
+            <div className="flex items-center justify-center gap-2 text-sm" style={{ color: "#315A98" }}>
               <span>📄</span>
               <span>{file.name}</span>
               <button
@@ -153,10 +153,10 @@ export default function DocumentVaultModal({ onClose, onSubmit }) {
           ) : (
             <div>
               <div className="text-2xl mb-2">📄</div>
-              <div className="text-sm" style={{ color: "#9AA0B4" }}>
+              <div className="text-sm" style={{ color: "#475569" }}>
                 Click to upload or drag a document here
               </div>
-              <div className="text-xs mt-1" style={{ color: "#4A5568" }}>
+              <div className="text-xs mt-1" style={{ color: "#94A3B8" }}>
                 .pdf, .docx, .txt, .md, .csv, etc. (max 10 MB for PDF/DOCX)
               </div>
             </div>
@@ -187,9 +187,9 @@ export default function DocumentVaultModal({ onClose, onSubmit }) {
           rows={4}
           className="w-full bg-transparent text-sm placeholder-gray-600 resize-none outline-none rounded-xl px-4 py-3 mb-4"
           style={{
-            background: "#0D1117",
-            border: "1px solid #2A3347",
-            color: "#E2E8F0",
+            background: "#FBFAF7",
+            border: "1px solid #D8DEE8",
+            color: "#1F2937",
           }}
         />
 
@@ -197,7 +197,7 @@ export default function DocumentVaultModal({ onClose, onSubmit }) {
           <button
             onClick={onClose}
             className="px-4 py-2 rounded-xl text-sm font-medium transition-colors"
-            style={{ background: "transparent", color: "#9AA0B4", border: "1px solid #2A3347" }}
+            style={{ background: "transparent", color: "#475569", border: "1px solid #D8DEE8" }}
           >
             Cancel
           </button>
@@ -206,8 +206,8 @@ export default function DocumentVaultModal({ onClose, onSubmit }) {
             disabled={!canSubmit}
             className="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-150"
             style={{
-              background: canSubmit ? "linear-gradient(135deg, #3A5A9F, #2A4A8F)" : "#1E2535",
-              color: canSubmit ? "#FFFFFF" : "#4A5568",
+              background: canSubmit ? "linear-gradient(135deg, #3A5A9F, #2A4A8F)" : "#F8FAFC",
+              color: canSubmit ? "#FFFFFF" : "#94A3B8",
               cursor: canSubmit ? "pointer" : "not-allowed",
             }}
           >

@@ -97,24 +97,24 @@ export default function ProjectModal({ project, onSave, onDelete, onClose }) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
+      style={{ background: "rgba(15,23,42,0.28)", backdropFilter: "blur(4px)" }}
       onClick={handleBackdrop}
     >
       <div
         className="w-full max-w-md rounded-2xl p-6 shadow-2xl"
         style={{
-          background: "#161B27",
-          border: "1px solid #2A3347",
-          boxShadow: "0 24px 64px rgba(0,0,0,0.6)",
+          background: "#FFFFFF",
+          border: "1px solid #D8DEE8",
+          boxShadow: "0 24px 64px rgba(15,23,42,0.16)",
         }}
       >
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-xl font-semibold" style={{ fontFamily: "DM Serif Display, serif", color: "#C9A55C" }}>
+          <h2 className="text-xl font-semibold" style={{ fontFamily: "DM Serif Display, serif", color: "#315A98" }}>
             {isEdit ? "Edit Project" : "New Project"}
           </h2>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-[#2A3347] transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-[#D8DEE8] transition-colors"
           >
             ✕
           </button>
@@ -132,7 +132,7 @@ export default function ProjectModal({ project, onSave, onDelete, onClose }) {
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               placeholder="Acme Corp v. Smith"
               className="w-full px-3 py-2.5 rounded-lg text-sm outline-none"
-              style={{ background: "#0F1117", border: "1px solid #2A3347", color: "#E8E8E8" }}
+              style={{ background: "#FFFFFF", border: "1px solid #D8DEE8", color: "#1F2937" }}
             />
           </div>
 
@@ -146,7 +146,7 @@ export default function ProjectModal({ project, onSave, onDelete, onClose }) {
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
               placeholder="Background, parties, key dates, jurisdiction. This text is included in every chat in this project."
               className="w-full px-3 py-2.5 rounded-lg text-sm outline-none resize-none"
-              style={{ background: "#0F1117", border: "1px solid #2A3347", color: "#E8E8E8" }}
+              style={{ background: "#FFFFFF", border: "1px solid #D8DEE8", color: "#1F2937" }}
             />
             <p className="text-xs text-gray-600 mt-1">
               Anything you put here is prepended to the system prompt for chats in this project.
@@ -184,7 +184,7 @@ export default function ProjectModal({ project, onSave, onDelete, onClose }) {
                 onClick={() => fileInputRef.current?.click()}
                 disabled={Boolean(parsing)}
                 className="text-xs px-2 py-1 rounded transition-colors disabled:opacity-50"
-                style={{ background: "#0F1117", border: "1px solid #2A3347", color: "#C9A55C" }}
+                style={{ background: "#FFFFFF", border: "1px solid #D8DEE8", color: "#315A98" }}
               >
                 {parsing ? `Parsing ${parsing}…` : "+ Add"}
               </button>
@@ -207,16 +207,16 @@ export default function ProjectModal({ project, onSave, onDelete, onClose }) {
                     key={doc.id}
                     className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs"
                     style={{
-                      background: doc.error ? "#2A1010" : "#0F1117",
-                      border: `1px solid ${doc.error ? "#6b1010" : "#2A3347"}`,
-                      color: doc.error ? "#EF4444" : "#E8E8E8",
+                      background: doc.error ? "#2A1010" : "#FFFFFF",
+                      border: `1px solid ${doc.error ? "#6b1010" : "#D8DEE8"}`,
+                      color: doc.error ? "#EF4444" : "#1F2937",
                     }}
                   >
                     <span className="truncate flex-1">{doc.name}</span>
                     {doc.error ? (
                       <span className="text-[10px]" style={{ color: "#EF4444" }}>{doc.error}</span>
                     ) : doc.truncated ? (
-                      <span className="text-[10px]" style={{ color: "#6B7280" }} title={`${doc.sizeBytes || 0} bytes; truncated for context`}>truncated</span>
+                      <span className="text-[10px]" style={{ color: "#64748B" }} title={`${doc.sizeBytes || 0} bytes; truncated for context`}>truncated</span>
                     ) : null}
                     <button
                       type="button"
@@ -246,7 +246,7 @@ export default function ProjectModal({ project, onSave, onDelete, onClose }) {
           <button
             onClick={onClose}
             className="flex-1 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition-colors"
-            style={{ background: "#0F1117", border: "1px solid #2A3347" }}
+            style={{ background: "#FFFFFF", border: "1px solid #D8DEE8" }}
           >
             Cancel
           </button>
@@ -255,8 +255,8 @@ export default function ProjectModal({ project, onSave, onDelete, onClose }) {
             disabled={!form.name.trim()}
             className="flex-1 py-2.5 rounded-lg text-sm font-medium transition-all disabled:opacity-50"
             style={{
-              background: "linear-gradient(135deg, #C9A55C, #A8874A)",
-              color: "#0F1117",
+              background: "linear-gradient(135deg, #315A98, #244876)",
+              color: "#FFFFFF",
             }}
           >
             {isEdit ? "Save" : "Create"}
@@ -267,4 +267,4 @@ export default function ProjectModal({ project, onSave, onDelete, onClose }) {
   );
 }
 
-const COLORS = ["#C9A55C", "#7BA4FF", "#22C55E", "#EF4444", "#A78BFA", "#F59E0B"];
+const COLORS = ["#315A98", "#315A98", "#22C55E", "#EF4444", "#A78BFA", "#F59E0B"];

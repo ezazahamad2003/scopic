@@ -15,8 +15,8 @@ export default function MessageBubble({ message, isStreaming }) {
         <div
           className="w-8 h-8 rounded-lg flex-shrink-0 mr-3 flex items-center justify-center text-xs font-bold mt-0.5"
           style={{
-            background: "linear-gradient(135deg, #C9A55C, #A8874A)",
-            color: "#0F1117",
+            background: "linear-gradient(135deg, #315A98, #244876)",
+            color: "#FFFFFF",
           }}
         >
           S
@@ -30,9 +30,9 @@ export default function MessageBubble({ message, isStreaming }) {
             : "rounded-2xl rounded-tl-sm px-4 py-3"
         }`}
         style={{
-          background: isUser ? "#1E3A5F" : "#161B27",
-          border: isUser ? "1px solid #2A5080" : "1px solid #2A3347",
-          color: message.isError ? "#EF4444" : "#E8E8E8",
+          background: isUser ? "#1E3A5F" : "#FFFFFF",
+          border: isUser ? "1px solid #2A5080" : "1px solid #D8DEE8",
+          color: message.isError ? "#EF4444" : "#1F2937",
         }}
       >
         {isThinking ? (
@@ -42,7 +42,7 @@ export default function MessageBubble({ message, isStreaming }) {
               {[0, 1, 2].map((i) => (
                 <div
                   key={i}
-                  className="w-1.5 h-1.5 rounded-full bg-[#C9A55C] animate-bounce"
+                  className="w-1.5 h-1.5 rounded-full bg-[#315A98] animate-bounce"
                   style={{ animationDelay: `${i * 150}ms` }}
                 />
               ))}

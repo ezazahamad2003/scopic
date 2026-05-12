@@ -1,11 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
+import ModelPicker from "./ModelPicker.jsx";
 
 const ACCEPTED_TEXT_TYPES = [
   ".txt", ".md", ".json", ".js", ".ts", ".jsx", ".tsx",
   ".html", ".css", ".py", ".xml", ".yaml", ".yml",
 ];
-// Tabular and rich-doc files go through the main-process parser so we
-// always serve the model clean text.
 const ACCEPTED_BINARY_TYPES = [".pdf", ".docx", ".csv", ".tsv", ".xlsx", ".xls"];
 const ALL_ACCEPTED_TYPES = [...ACCEPTED_TEXT_TYPES, ...ACCEPTED_BINARY_TYPES];
 const ACCEPT_ATTR = [
@@ -47,7 +46,19 @@ function readFileAsArrayBuffer(file) {
   });
 }
 
-export default function InputBar({ onSend, onStop, isStreaming, connected, activeMode, provider, draft, onDraftConsumed }) {
+export default function InputBar({
+  onSend,
+  onStop,
+  isStreaming,
+  connected,
+  activeMode,
+  provider,
+  settings,
+  models,
+  onChangeModel,
+  draft,
+  onDraftConsumed,
+}) {
   const [value, setValue] = useState("");
   const [attachedFile, setAttachedFile] = useState(null);
   const textareaRef = useRef(null);
@@ -103,19 +114,12 @@ export default function InputBar({ onSend, onStop, isStreaming, connected, activ
     onSend(messageContent);
     setValue("");
     setAttachedFile(null);
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-    }
-  };
-
-  const handleFileClick = () => {
-    fileInputRef.current?.click();
+    if (textareaRef.current) textareaRef.current.style.height = "auto";
   };
 
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     e.target.value = "";
 
     const ext = "." + file.name.split(".").pop().toLowerCase();
@@ -155,122 +159,78 @@ export default function InputBar({ onSend, onStop, isStreaming, connected, activ
   };
 
   const canSend = (value.trim() || (attachedFile && !attachedFile.error)) && !isStreaming && connected;
-
-  const offlineHint =
-    provider === "ollama"
-      ? "Start Ollama to begin..."
-      : "Add an API key in Settings...";
-
+  const offlineHint = provider === "ollama" ? "Start Ollama to begin..." : "Add an API key in Settings...";
   const placeholder =
     activeMode === "document_review"
       ? connected
         ? "Upload a document or paste contract text..."
         : offlineHint
       : connected
-      ? "Ask anything..."
+      ? "Ask Scopic about a matter, clause, filing, or workflow..."
       : offlineHint;
 
   return (
-    <div
-      className="px-4 py-4 border-t border-[#1E2535]"
-      style={{ background: "#0D1117" }}
-    >
+    <div className="px-5 py-4 border-t" style={{ background: "#FBFAF7", borderColor: "#E7E0D2" }}>
       {!connected && (
         <div
-          className="mb-3 px-4 py-2.5 rounded-lg text-sm"
-          style={{
-            background: "#1a1500",
-            border: "1px solid #3a2e0033",
-            color: "#EAB308",
-          }}
+          className="mb-3 px-4 py-3 rounded-lg text-sm"
+          style={{ background: "#FFF7ED", border: "1px solid #FED7AA", color: "#9A3412" }}
         >
           {provider === "ollama" ? (
             <div>
-              <div className="flex items-center gap-2 mb-1.5">
-                <span>⚠️</span>
-                <span className="font-medium">Ollama not detected.</span>
-              </div>
-              <div className="text-xs leading-relaxed" style={{ color: "#C9A55C" }}>
-                Open Command Prompt and run:
-                <code
-                  className="block mt-1.5 px-2.5 py-1.5 rounded font-mono text-[12px]"
-                  style={{ background: "#0D1117", border: "1px solid #2A3347", color: "#E8E8E8" }}
-                >
-                  ollama serve
-                </code>
-                <span className="block mt-1.5 opacity-80">
-                  No model installed yet? Run <code className="px-1 py-0.5 rounded" style={{ background: "#0D1117", color: "#E8E8E8" }}>ollama pull phi3</code> first. Or switch to a cloud provider in Settings.
-                </span>
+              <div className="font-medium mb-1">Ollama is not detected.</div>
+              <div className="text-xs leading-relaxed">
+                Run <code className="px-1.5 py-0.5 rounded bg-white">ollama serve</code>, or pick a cloud model and add its API key.
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
-              <span>⚠️</span>
-              <span>API key not set. Open Settings and add your {providerLabel(provider)} key.</span>
+            <div>
+              API key not set. Open Settings and add your {providerLabel(provider)} key, or pick a ready local model.
             </div>
           )}
         </div>
       )}
 
-      {/* Attached file chip */}
       {attachedFile && (
         <div className="mb-2 flex items-center gap-2">
           <div
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs"
             style={{
-              background: attachedFile.error ? "#2a1010" : "#1a2535",
-              border: `1px solid ${attachedFile.error ? "#6b1010" : "#2A3F6F"}`,
-              color: attachedFile.error ? "#EF4444" : "#7BA4FF",
+              background: attachedFile.error ? "#FEF2F2" : "#EEF6FF",
+              border: `1px solid ${attachedFile.error ? "#FECACA" : "#BFDBFE"}`,
+              color: attachedFile.error ? "#DC2626" : "#1D4ED8",
             }}
           >
-            <span>{attachedFile.error ? "⚠️" : "📄"}</span>
+            <span>{attachedFile.error ? "!" : "doc"}</span>
             <span className="truncate max-w-xs">
               {attachedFile.error ? attachedFile.error : attachedFile.name}
             </span>
-            <button
-              onClick={() => setAttachedFile(null)}
-              className="ml-1 hover:opacity-70 transition-opacity"
-            >
-              ×
+            <button onClick={() => setAttachedFile(null)} className="ml-1 hover:opacity-70 transition-opacity">
+              x
             </button>
           </div>
         </div>
       )}
 
       <div
-        className="flex items-end gap-3 rounded-2xl px-4 py-3"
-        style={{ background: "#141820", border: "1px solid #2A3347" }}
+        className="flex items-end gap-3 rounded-xl px-4 py-3 shadow-sm"
+        style={{ background: "#FFFFFF", border: "1px solid #D8DEE8" }}
       >
-        {/* File upload button */}
+        <div className="hidden md:block mb-0.5">
+          <ModelPicker settings={settings} models={models} connected={connected} onChange={onChangeModel} />
+        </div>
+
         <button
-          onClick={handleFileClick}
-          className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mb-0.5 transition-all duration-150"
-          style={{
-            background: "#1E2535",
-            border: "1px solid #2A3347",
-            color: "#6B7280",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "#C9A55C44";
-            e.currentTarget.style.color = "#C9A55C";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "#2A3347";
-            e.currentTarget.style.color = "#6B7280";
-          }}
-          title="Attach document (.txt, .md, .pdf, .docx, etc.)"
+          onClick={() => fileInputRef.current?.click()}
+          className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center mb-0.5 transition-all duration-150"
+          style={{ background: "#F8FAFC", border: "1px solid #D8DEE8", color: "#64748B" }}
+          title="Attach document"
           type="button"
         >
-          <span className="text-lg leading-none">+</span>
+          +
         </button>
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          className="hidden"
-          accept={ACCEPT_ATTR}
-          onChange={handleFileChange}
-        />
+        <input ref={fileInputRef} type="file" className="hidden" accept={ACCEPT_ATTR} onChange={handleFileChange} />
 
         <textarea
           ref={textareaRef}
@@ -280,30 +240,22 @@ export default function InputBar({ onSend, onStop, isStreaming, connected, activ
           placeholder={placeholder}
           disabled={!connected || isStreaming}
           rows={1}
-          className="flex-1 bg-transparent text-sm placeholder-gray-600 resize-none outline-none leading-relaxed"
-          style={{ maxHeight: 160, overflowY: "auto", color: "#E2E8F0" }}
+          className="flex-1 bg-transparent text-sm placeholder-gray-400 resize-none outline-none leading-relaxed"
+          style={{ maxHeight: 160, overflowY: "auto", color: "#1F2937" }}
         />
 
         <button
           type="button"
           onClick={(e) => {
             e.preventDefault();
-            if (isStreaming) {
-              if (typeof onStop === "function") onStop();
-            } else {
-              handleSend();
-            }
+            if (isStreaming) onStop?.();
+            else handleSend();
           }}
           disabled={!isStreaming && !canSend}
-          className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-150 mb-0.5"
+          className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-150 mb-0.5"
           style={{
-            background: isStreaming
-              ? "#DC2626"
-              : canSend
-              ? "linear-gradient(135deg, #3A5A9F, #2A4A8F)"
-              : "#1E2535",
-            border: "none",
-            color: isStreaming ? "#FFFFFF" : canSend ? "#FFFFFF" : "#4A5568",
+            background: isStreaming ? "#DC2626" : canSend ? "#111827" : "#E5E7EB",
+            color: isStreaming || canSend ? "#FFFFFF" : "#94A3B8",
             cursor: isStreaming || canSend ? "pointer" : "not-allowed",
           }}
           title={isStreaming ? "Stop response" : "Send"}
@@ -311,26 +263,17 @@ export default function InputBar({ onSend, onStop, isStreaming, connected, activ
           {isStreaming ? (
             <div className="w-3 h-3 rounded-sm" style={{ background: "#FFFFFF" }} />
           ) : (
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="22" y1="2" x2="11" y2="13" />
-              <polygon points="22 2 15 22 11 13 2 9 22 2" />
-            </svg>
+            <span style={{ fontSize: 15, lineHeight: 1 }}>↑</span>
           )}
         </button>
       </div>
 
-      <p className="text-center text-xs mt-2" style={{ color: "#374151" }}>
-        A reminder that Scopic is an AI assistant providing information, not legal advice.
-        No attorney-client relationship is formed here, and always review outputs with a qualified professional.
+      <div className="mt-2 md:hidden">
+        <ModelPicker settings={settings} models={models} connected={connected} onChange={onChangeModel} />
+      </div>
+
+      <p className="text-center text-xs mt-2" style={{ color: "#8A8174" }}>
+        Scopic provides legal information, not legal advice. Review outputs with a qualified professional.
       </p>
     </div>
   );

@@ -113,9 +113,9 @@ export const DEFAULT_SETTINGS = {
     gemini: "",
   },
   cloudModels: {
-    anthropic: "claude-opus-4-7",
-    openai: "gpt-4o",
-    gemini: "gemini-2.5-pro",
+    anthropic: "claude-sonnet-4-6",
+    openai: "gpt-5.4-mini",
+    gemini: "gemini-3-flash-preview",
   },
 };
 
@@ -136,6 +136,9 @@ export const DEFAULT_CLOUD_MODELS = {
     "claude-haiku-4-5-20251001",
   ],
   openai: [
+    "gpt-5.5",
+    "gpt-5.4-mini",
+    "gpt-5.4-nano",
     "gpt-4o",
     "gpt-4o-mini",
     "o3-mini",
@@ -143,6 +146,9 @@ export const DEFAULT_CLOUD_MODELS = {
     "o1-mini",
   ],
   gemini: [
+    "gemini-3.1-pro-preview",
+    "gemini-3-flash-preview",
+    "gemini-3.1-flash-lite-preview",
     "gemini-2.5-pro",
     "gemini-2.5-flash",
     "gemini-2.0-flash",
@@ -150,6 +156,29 @@ export const DEFAULT_CLOUD_MODELS = {
     "gemini-1.5-pro",
   ],
 };
+
+export const MODEL_OPTIONS = [
+  { id: "claude-opus-4-7", label: "Claude Opus 4.7", provider: "anthropic", group: "Anthropic" },
+  { id: "claude-sonnet-4-6", label: "Claude Sonnet 4.6", provider: "anthropic", group: "Anthropic" },
+  { id: "claude-haiku-4-5-20251001", label: "Claude Haiku 4.5", provider: "anthropic", group: "Anthropic" },
+  { id: "gemini-3.1-pro-preview", label: "Gemini 3.1 Pro", provider: "gemini", group: "Google" },
+  { id: "gemini-3-flash-preview", label: "Gemini 3 Flash", provider: "gemini", group: "Google" },
+  { id: "gemini-3.1-flash-lite-preview", label: "Gemini 3.1 Flash Lite", provider: "gemini", group: "Google" },
+  { id: "gpt-5.5", label: "GPT-5.5", provider: "openai", group: "OpenAI" },
+  { id: "gpt-5.4-mini", label: "GPT-5.4 Mini", provider: "openai", group: "OpenAI" },
+  { id: "gpt-5.4-nano", label: "GPT-5.4 Nano", provider: "openai", group: "OpenAI" },
+];
+
+export function providerForModel(modelId) {
+  if (modelId?.startsWith("claude")) return "anthropic";
+  if (modelId?.startsWith("gemini")) return "gemini";
+  if (modelId?.startsWith("gpt-") || modelId?.startsWith("o")) return "openai";
+  return "ollama";
+}
+
+export function modelLabel(modelId) {
+  return MODEL_OPTIONS.find((m) => m.id === modelId)?.label || modelId || "Model";
+}
 
 export const SUGGESTION_CARDS = [
   {
@@ -188,6 +217,46 @@ export const APP_TAGLINE = "Your legal AI assistant";
 // Pre-built workflow templates. Each one is a structured prompt the user can
 // kick off from the Welcome screen, and then continue chatting on top of.
 export const WORKFLOWS = [
+  {
+    id: "cp-checklist",
+    icon: "CP",
+    title: "CP Checklist",
+    blurb: "Generate a conditions precedent checklist from a financing document.",
+    prompt: `Generate a conditions precedent checklist from the uploaded credit agreement or financing document.
+
+Structure the answer by condition category, such as Corporate, Financial, Legal, Security, and Deliverables. For each category, include a table with these columns:
+
+| Index | Clause Number | Clause | Status |
+
+Leave Status blank for the user to fill in. Keep clause descriptions concise and cite the relevant clause or schedule reference.`,
+  },
+  {
+    id: "credit-summary",
+    icon: "CR",
+    title: "Credit Agreement Summary",
+    blurb: "Summarize facilities, covenants, defaults, security, and transfer terms.",
+    prompt: `Review the uploaded credit agreement and produce a comprehensive legal summary. Cover lenders, borrowers, guarantors, facilities, amount, purpose, interest, fees, repayment, maturity, security, guarantees, financial covenants, events of default, assignment, change of control, prepayment fees, governing law, and dispute resolution.
+
+For each section, identify the key provisions, quote relevant clause references, and flag unusual, onerous, or non-market terms.`,
+  },
+  {
+    id: "shareholder-summary",
+    icon: "SH",
+    title: "Shareholder Agreement Summary",
+    blurb: "Review governance, transfer rights, drag/tag, reserved matters, and exit terms.",
+    prompt: `Review the uploaded shareholder agreement and produce a comprehensive legal summary. Cover parties and shareholdings, share classes and rights, board composition, reserved matters, pre-emption, transfer restrictions, ROFR, drag-along, tag-along, anti-dilution, dividend policy, exit/liquidity, deadlock, non-compete/non-solicit, governing law, and dispute resolution.
+
+For each section, cite clause references and flag any unusual, onerous, or market-standard deviations.`,
+  },
+  {
+    id: "change-control",
+    icon: "CC",
+    title: "Change of Control Review",
+    blurb: "Surface consent, termination, option, and acceleration issues.",
+    prompt: `Perform a change of control due diligence review across the document. Extract parties, agreement date, term, exact change of control triggers, whether consent is required, termination rights, put/call options, acceleration, fees, and other financial implications.
+
+Output a table with columns: Issue, Clause Reference, Summary, Risk, Required Action.`,
+  },
   {
     id: "nda-draft",
     icon: "✍️",

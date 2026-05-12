@@ -100,6 +100,19 @@ export default function App() {
     }
   };
 
+  const handleChangeModel = (provider, model) => {
+    const next = {
+      ...settings,
+      provider,
+      model: provider === "ollama" ? model : settings.model,
+      cloudModels:
+        provider === "ollama"
+          ? { ...settings.cloudModels }
+          : { ...settings.cloudModels, [provider]: model },
+    };
+    saveSettings(next);
+  };
+
   const handleVaultSubmit = (message) => {
     setVaultOpen(false);
     setActiveView("assistant");
@@ -165,23 +178,23 @@ export default function App() {
   return (
     <div
       className="flex h-screen w-screen overflow-hidden select-none"
-      style={{ background: "#0D1117" }}
+      style={{ background: "#F7F5F0" }}
     >
       {/* Custom Titlebar */}
       <div
         className="titlebar-drag fixed top-0 left-0 right-0 h-8 z-50 flex items-center justify-end"
-        style={{ background: "#0D1117" }}
+        style={{ background: "#F7F5F0", borderBottom: "1px solid #E7E0D2" }}
       >
         <div className="titlebar-no-drag flex items-center h-full">
           <button
             onClick={() => window.windowControls?.minimize()}
-            className="w-12 h-8 flex items-center justify-center text-gray-500 hover:bg-[#1E2535] hover:text-white transition-colors text-sm"
+            className="w-12 h-8 flex items-center justify-center text-gray-500 hover:bg-[#ECE7DC] hover:text-gray-900 transition-colors text-sm"
           >
             &#8722;
           </button>
           <button
             onClick={() => window.windowControls?.maximize()}
-            className="w-12 h-8 flex items-center justify-center text-gray-500 hover:bg-[#1E2535] hover:text-white transition-colors text-xs"
+            className="w-12 h-8 flex items-center justify-center text-gray-500 hover:bg-[#ECE7DC] hover:text-gray-900 transition-colors text-xs"
           >
             &#9633;
           </button>
@@ -223,6 +236,9 @@ export default function App() {
             activeMode={activeMode}
             onSetMode={handleSetMode}
             provider={settings?.provider || "ollama"}
+            settings={settings}
+            models={models}
+            onChangeModel={handleChangeModel}
             activeProject={activeProject}
             onClearProject={() => setActiveProjectId(null)}
             onRunPipeline={handleRunPipeline}

@@ -16,9 +16,9 @@ export default function UpdateBanner({ status, version, progress, onInstall }) {
     <div
       className="fixed bottom-4 right-4 z-40 rounded-xl px-4 py-3 flex items-center gap-3 shadow-lg"
       style={{
-        background: isReady ? "#1a2540" : "#141820",
-        border: `1px solid ${isReady ? "#3A5A9F" : "#2A3347"}`,
-        color: "#E2E8F0",
+        background: isReady ? "#EEF6FF" : "#FFFFFF",
+        border: `1px solid ${isReady ? "#3A5A9F" : "#D8DEE8"}`,
+        color: "#1F2937",
         maxWidth: 360,
       }}
     >

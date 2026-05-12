@@ -23,19 +23,13 @@ export default function WelcomeScreen({ onSuggestion, onSetMode, onRunPipeline, 
         {getGreeting()}
       </p>
       <h1
-        className="text-4xl font-semibold mb-3 text-center"
-        style={{
-          fontFamily: "DM Serif Display, serif",
-          background: "linear-gradient(135deg, #F0F4FF 0%, #C9A55C 60%, #A8874A 100%)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-          backgroundClip: "text",
-        }}
+        className="text-3xl font-semibold mb-2 text-center"
+        style={{ color: "#1F2937" }}
       >
         How can I help you today?
       </h1>
-      <p className="text-sm mb-10 text-center" style={{ color: "#6B7280" }}>
-        Pick a starting point below — or just ask.
+      <p className="text-sm mb-10 text-center" style={{ color: "#64748B" }}>
+        Choose a starting point or ask anything
       </p>
 
       {/* Feature cards */}
@@ -45,16 +39,16 @@ export default function WelcomeScreen({ onSuggestion, onSetMode, onRunPipeline, 
           onClick={() => onSetMode("document_review")}
           className="text-left p-6 rounded-2xl transition-all duration-150"
           style={{
-            background: "#141C30",
-            border: "1px solid #1E3060",
+            background: "#FFFFFF",
+            border: "1px solid #D8DEE8",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "#3A5A9F";
-            e.currentTarget.style.background = "#172035";
+            e.currentTarget.style.borderColor = "#315A98";
+            e.currentTarget.style.background = "#F8FAFC";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "#1E3060";
-            e.currentTarget.style.background = "#141C30";
+            e.currentTarget.style.borderColor = "#D8DEE8";
+            e.currentTarget.style.background = "#FFFFFF";
           }}
         >
           <div className="flex items-center gap-2 mb-3">
@@ -62,11 +56,11 @@ export default function WelcomeScreen({ onSuggestion, onSetMode, onRunPipeline, 
           </div>
           <div
             className="text-base font-semibold mb-2"
-            style={{ color: "#7BA4FF" }}
+            style={{ color: "#315A98" }}
           >
             Document Review
           </div>
-          <div className="text-sm leading-relaxed" style={{ color: "#6B7280" }}>
+          <div className="text-sm leading-relaxed" style={{ color: "#64748B" }}>
             Upload a contract and the AI can identify risks, analyze clauses and
             suggest improvements based on the prompt of your choice
           </div>
@@ -77,16 +71,16 @@ export default function WelcomeScreen({ onSuggestion, onSetMode, onRunPipeline, 
           onClick={() => onSetMode("general")}
           className="text-left p-6 rounded-2xl transition-all duration-150"
           style={{
-            background: "#141820",
-            border: "1px solid #2A3347",
+            background: "#FFFFFF",
+            border: "1px solid #D8DEE8",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "#4A5568";
-            e.currentTarget.style.background = "#161B27";
+            e.currentTarget.style.borderColor = "#94A3B8";
+            e.currentTarget.style.background = "#FFFFFF";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "#2A3347";
-            e.currentTarget.style.background = "#141820";
+            e.currentTarget.style.borderColor = "#D8DEE8";
+            e.currentTarget.style.background = "#FFFFFF";
           }}
         >
           <div className="flex items-center gap-2 mb-3">
@@ -94,11 +88,11 @@ export default function WelcomeScreen({ onSuggestion, onSetMode, onRunPipeline, 
           </div>
           <div
             className="text-base font-semibold mb-2"
-            style={{ color: "#F5C842" }}
+            style={{ color: "#315A98" }}
           >
             Legal Questions
           </div>
-          <div className="text-sm leading-relaxed" style={{ color: "#6B7280" }}>
+          <div className="text-sm leading-relaxed" style={{ color: "#64748B" }}>
             Ask about fundraising, employment, contracts, IP, or any startup
             legal topic
           </div>
@@ -110,7 +104,7 @@ export default function WelcomeScreen({ onSuggestion, onSetMode, onRunPipeline, 
         <div className="w-full max-w-2xl mb-8">
           <div
             className="text-xs font-semibold tracking-widest mb-3 uppercase"
-            style={{ color: "#4A5568" }}
+            style={{ color: "#94A3B8" }}
           >
             Pipelines · multi-step
           </div>
@@ -121,28 +115,28 @@ export default function WelcomeScreen({ onSuggestion, onSetMode, onRunPipeline, 
                 onClick={() => onRunPipeline(pl)}
                 className="text-left p-3 rounded-xl transition-all duration-150 flex items-center gap-3"
                 style={{
-                  background: "#0F1726",
-                  border: "1px solid #1E3060",
+                  background: "#FFFFFF",
+                  border: "1px solid #D8DEE8",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "#3A5A9F";
-                  e.currentTarget.style.background = "#13203A";
+                  e.currentTarget.style.borderColor = "#315A98";
+                  e.currentTarget.style.background = "#F8FAFC";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "#1E3060";
-                  e.currentTarget.style.background = "#0F1726";
+                  e.currentTarget.style.borderColor = "#D8DEE8";
+                  e.currentTarget.style.background = "#FFFFFF";
                 }}
               >
                 <span className="text-xl">{pl.icon}</span>
                 <div className="flex-1">
-                  <div className="text-sm font-medium" style={{ color: "#7BA4FF" }}>
+                  <div className="text-sm font-medium" style={{ color: "#315A98" }}>
                     {pl.title}
                   </div>
-                  <div className="text-xs leading-snug mt-0.5" style={{ color: "#6B7280" }}>
+                  <div className="text-xs leading-snug mt-0.5" style={{ color: "#64748B" }}>
                     {pl.blurb}
                   </div>
                 </div>
-                <span className="text-xs" style={{ color: "#7BA4FF" }}>Run →</span>
+                <span className="text-xs" style={{ color: "#315A98" }}>Run →</span>
               </button>
             ))}
           </div>
@@ -153,7 +147,7 @@ export default function WelcomeScreen({ onSuggestion, onSetMode, onRunPipeline, 
       <div className="w-full max-w-2xl mb-8">
         <div
           className="text-xs font-semibold tracking-widest mb-3 uppercase"
-          style={{ color: "#4A5568" }}
+          style={{ color: "#94A3B8" }}
         >
           Workflows
         </div>
@@ -164,25 +158,25 @@ export default function WelcomeScreen({ onSuggestion, onSetMode, onRunPipeline, 
               onClick={() => (onPickWorkflow ? onPickWorkflow(wf) : onSuggestion(wf.prompt))}
               className="text-left p-3 rounded-xl transition-all duration-150"
               style={{
-                background: "#0F1117",
-                border: "1px solid #1E2535",
+                background: "#FFFFFF",
+                border: "1px solid #F8FAFC",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "#C9A55C44";
-                e.currentTarget.style.background = "#141820";
+                e.currentTarget.style.borderColor = "#315A9844";
+                e.currentTarget.style.background = "#FFFFFF";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "#1E2535";
-                e.currentTarget.style.background = "#0F1117";
+                e.currentTarget.style.borderColor = "#F8FAFC";
+                e.currentTarget.style.background = "#FFFFFF";
               }}
             >
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-base">{wf.icon}</span>
-                <span className="text-sm font-medium" style={{ color: "#E2E8F0" }}>
+                <span className="text-sm font-medium" style={{ color: "#1F2937" }}>
                   {wf.title}
                 </span>
               </div>
-              <div className="text-xs leading-snug" style={{ color: "#6B7280" }}>
+              <div className="text-xs leading-snug" style={{ color: "#64748B" }}>
                 {wf.blurb}
               </div>
             </button>
@@ -194,7 +188,7 @@ export default function WelcomeScreen({ onSuggestion, onSetMode, onRunPipeline, 
       <div className="w-full max-w-2xl">
         <div
           className="text-xs font-semibold tracking-widest mb-3 uppercase"
-          style={{ color: "#4A5568" }}
+          style={{ color: "#94A3B8" }}
         >
           Trending Questions
         </div>
@@ -205,19 +199,19 @@ export default function WelcomeScreen({ onSuggestion, onSetMode, onRunPipeline, 
               onClick={() => onSuggestion(q)}
               className="w-full text-left px-4 py-3 rounded-xl text-sm transition-all duration-150"
               style={{
-                background: "#0D1117",
-                border: "1px solid #1E2535",
-                color: "#9AA0B4",
+                background: "#FBFAF7",
+                border: "1px solid #F8FAFC",
+                color: "#475569",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "#2A3347";
-                e.currentTarget.style.background = "#111722";
-                e.currentTarget.style.color = "#C8D0E0";
+                e.currentTarget.style.borderColor = "#D8DEE8";
+                e.currentTarget.style.background = "#FFFFFF";
+                e.currentTarget.style.color = "#334155";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "#1E2535";
-                e.currentTarget.style.background = "#0D1117";
-                e.currentTarget.style.color = "#9AA0B4";
+                e.currentTarget.style.borderColor = "#F8FAFC";
+                e.currentTarget.style.background = "#FBFAF7";
+                e.currentTarget.style.color = "#475569";
               }}
             >
               "{q}"

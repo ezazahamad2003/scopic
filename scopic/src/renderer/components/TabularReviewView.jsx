@@ -165,12 +165,12 @@ export default function TabularReviewView({ settings }) {
   const totalLines = file ? file.text.split("\n").length : 0;
 
   return (
-    <main className="flex flex-col flex-1 overflow-hidden" style={{ background: "#0D1117" }}>
-      <div className="px-8 py-6 border-b" style={{ borderColor: "#1E2535" }}>
-        <h1 className="text-xl font-semibold" style={{ fontFamily: "DM Serif Display, serif", color: "#E8E8E8" }}>
+    <main className="flex flex-col flex-1 overflow-hidden" style={{ background: "#FBFAF7" }}>
+      <div className="px-8 py-6 border-b" style={{ borderColor: "#F8FAFC" }}>
+        <h1 className="text-xl font-semibold" style={{ fontFamily: "DM Serif Display, serif", color: "#1F2937" }}>
           Tabular Review
         </h1>
-        <p className="text-xs mt-0.5" style={{ color: "#6B7280" }}>
+<p className="text-xs mt-0.5" style={{ color: "#64748B" }}>
           Drop a Word doc, PDF, spreadsheet, or text file. Ask questions about clauses, dates, parties, totals, anomalies.
         </p>
       </div>
@@ -185,19 +185,19 @@ export default function TabularReviewView({ settings }) {
             onClick={() => fileInputRef.current?.click()}
             className="flex flex-col items-center justify-center py-14 rounded-xl cursor-pointer transition-all"
             style={{
-              background: "#0F1117",
-              border: "2px dashed #2A3347",
-              color: "#6B7280",
+              background: "#FFFFFF",
+              border: "2px dashed #D8DEE8",
+              color: "#64748B",
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#C9A55C66"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#2A3347"; }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#315A9866"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#D8DEE8"; }}
           >
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#C9A55C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-3">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#315A98" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-3">
               <rect x="3" y="3" width="18" height="18" rx="2" />
               <line x1="3" y1="9" x2="21" y2="9" />
               <line x1="9" y1="3" x2="9" y2="21" />
             </svg>
-            <div className="text-sm" style={{ color: "#E8E8E8" }}>
+<div className="text-sm" style={{ color: "#1F2937" }}>
               {parsing ? "Parsing…" : "Drop a document or spreadsheet here"}
             </div>
             <div className="text-xs mt-1">
@@ -210,17 +210,17 @@ export default function TabularReviewView({ settings }) {
           <div className="flex flex-col h-full overflow-hidden">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2 text-xs">
-                <span className="px-2 py-1 rounded" style={{ background: "#1E2535", color: "#C9A55C" }}>
+                <span className="px-2 py-1 rounded" style={{ background: "#F8FAFC", color: "#315A98" }}>
                   {file.name}
                 </span>
-                <span style={{ color: "#6B7280" }}>
+                <span style={{ color: "#64748B" }}>
                   {totalLines.toLocaleString()} lines · {(file.sizeBytes / 1024).toFixed(1)} KB
                 </span>
               </div>
               <button
                 onClick={() => { setFile(null); setMessages([]); setError(null); }}
                 className="text-xs px-2 py-1 rounded transition-colors"
-                style={{ color: "#6B7280", border: "1px solid #2A3347" }}
+                style={{ color: "#64748B", border: "1px solid #D8DEE8" }}
               >
                 Replace file
               </button>
@@ -230,10 +230,10 @@ export default function TabularReviewView({ settings }) {
             <div
               className="rounded-lg overflow-auto mb-3 font-mono text-xs"
               style={{
-                background: "#0F1117",
-                border: "1px solid #2A3347",
+                background: "#FFFFFF",
+                border: "1px solid #D8DEE8",
                 maxHeight: "30vh",
-                color: "#C8D0E0",
+                color: "#334155",
               }}
             >
               <pre className="p-3 whitespace-pre" style={{ tabSize: 16 }}>
@@ -245,10 +245,10 @@ export default function TabularReviewView({ settings }) {
             {/* Chat */}
             <div
               className="flex-1 overflow-y-auto rounded-lg p-3 mb-3"
-              style={{ background: "#0F1117", border: "1px solid #2A3347" }}
+              style={{ background: "#FFFFFF", border: "1px solid #D8DEE8" }}
             >
               {messages.length === 0 ? (
-                <div className="text-center text-xs py-6" style={{ color: "#6B7280" }}>
+<div className="text-center text-xs py-6" style={{ color: "#64748B" }}>
                   Ask anything about this {file.kind === "tabular" ? "data" : "document"}. Examples:
                   <div className="mt-3 space-y-1.5 max-w-md mx-auto text-left">
                     {(file.kind === "tabular"
@@ -269,7 +269,7 @@ export default function TabularReviewView({ settings }) {
                         key={q}
                         onClick={() => setInput(q)}
                         className="block w-full text-left px-3 py-1.5 rounded text-xs transition-colors"
-                        style={{ background: "#161B27", border: "1px solid #1E2535", color: "#9AA0B4" }}
+                        style={{ background: "#FFFFFF", border: "1px solid #F8FAFC", color: "#475569" }}
                       >
                         {q}
                       </button>
@@ -280,12 +280,12 @@ export default function TabularReviewView({ settings }) {
                 <div className="space-y-3">
                   {messages.map((m, i) => (
                     <div key={i} className="text-sm">
-                      <div className="text-[10px] font-bold uppercase tracking-wide mb-1" style={{ color: m.role === "user" ? "#7BA4FF" : "#C9A55C" }}>
+                      <div className="text-[10px] font-bold uppercase tracking-wide mb-1" style={{ color: m.role === "user" ? "#315A98" : "#315A98" }}>
                         {m.role === "user" ? "You" : "Scopic"}
                       </div>
                       <div
                         className="leading-relaxed"
-                        style={{ color: m.isError ? "#EF4444" : "#E8E8E8" }}
+                        style={{ color: m.isError ? "#EF4444" : "#1F2937" }}
                         dangerouslySetInnerHTML={{ __html: m.role === "assistant" ? renderMarkdown(m.content || "") : escapeHtml(m.content || "") }}
                       />
                     </div>
@@ -305,7 +305,7 @@ export default function TabularReviewView({ settings }) {
                 placeholder="Ask about this data…"
                 disabled={isStreaming}
                 className="flex-1 px-4 py-2.5 rounded-lg text-sm outline-none disabled:opacity-50"
-                style={{ background: "#0F1117", border: "1px solid #2A3347", color: "#E8E8E8" }}
+                style={{ background: "#FFFFFF", border: "1px solid #D8DEE8", color: "#1F2937" }}
               />
               {isStreaming ? (
                 <button
@@ -321,8 +321,8 @@ export default function TabularReviewView({ settings }) {
                   disabled={!input.trim()}
                   className="px-4 py-2.5 rounded-lg text-sm font-medium transition-all disabled:opacity-50"
                   style={{
-                    background: "linear-gradient(135deg, #C9A55C, #A8874A)",
-                    color: "#0F1117",
+                    background: "linear-gradient(135deg, #315A98, #244876)",
+                    color: "#FFFFFF",
                   }}
                 >
                   Ask

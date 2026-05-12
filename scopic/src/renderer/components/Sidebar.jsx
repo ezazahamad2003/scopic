@@ -71,30 +71,16 @@ export default function Sidebar({
 
   return (
     <aside
-      className="flex flex-col border-r border-[#2A3347]"
-      style={{ width: 260, minWidth: 260, height: "100%", background: "#0D1117" }}
+      className="flex flex-col border-r "
+      style={{ width: 260, minWidth: 260, height: "100%", background: "#F3EFE6" }}
     >
       {/* Header */}
-      <div className="px-5 pt-5 pb-4 border-b border-[#2A3347] relative overflow-hidden">
-        <span
-          aria-hidden
-          className="pointer-events-none absolute -top-8 -left-6 w-24 h-24 rounded-full blur-2xl opacity-20"
-          style={{ background: "#C9A55C" }}
-        />
-        <span
-          className="relative text-sm font-bold tracking-widest"
-          style={{
-            background: "linear-gradient(135deg, #FFFFFF 0%, #C9A55C 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-            letterSpacing: "0.12em",
-          }}
-        >
-          SCOPIC LEGAL
+      <div className="px-5 pt-5 pb-4 border-b" style={{ borderColor: "#E0D8C9" }}>
+        <span className="text-sm font-bold tracking-widest" style={{ color: "#1F2937", letterSpacing: "0.12em" }}>
+          SCOPIC
         </span>
-        <p className="relative text-xs mt-0.5" style={{ color: "#4A5568" }}>
-          Private Beta Program
+        <p className="text-xs mt-0.5" style={{ color: "#A69B8D" }}>
+          Open-source legal workspace
         </p>
       </div>
 
@@ -109,33 +95,24 @@ export default function Sidebar({
               onClick={() => onChangeView(item.id)}
               className="relative w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150"
               style={{
-                background: active
-                  ? "linear-gradient(90deg, rgba(201,165,92,0.10), rgba(30,37,53,0.6) 60%)"
-                  : "transparent",
-                border: active ? "1px solid #2A3347" : "1px solid transparent",
-                color: active ? "#E2E8F0" : "#9AA0B4",
+                background: active ? "#FFFFFF" : "transparent",
+                border: active ? "1px solid #DDD6C8" : "1px solid transparent",
+                color: active ? "#1F2937" : "#6B6258",
               }}
               onMouseEnter={(e) => {
                 if (!active) {
-                  e.currentTarget.style.background = "#161B27";
-                  e.currentTarget.style.color = "#C8D0E0";
+                  e.currentTarget.style.background = "#FFFFFF";
+                  e.currentTarget.style.color = "#1F2937";
                 }
               }}
               onMouseLeave={(e) => {
                 if (!active) {
                   e.currentTarget.style.background = "transparent";
-                  e.currentTarget.style.color = "#9AA0B4";
+                  e.currentTarget.style.color = "#6B6258";
                 }
               }}
             >
-              {active && (
-                <span
-                  aria-hidden
-                  className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-r"
-                  style={{ background: "linear-gradient(180deg, #C9A55C, #A8874A)" }}
-                />
-              )}
-              <Icon size={16} color={active ? "#C9A55C" : "currentColor"} />
+              <Icon size={16} color={active ? "#315A98" : "currentColor"} />
               <span>{item.label}</span>
             </button>
           );
@@ -145,12 +122,12 @@ export default function Sidebar({
       {/* Assistant history (only in Assistant view) */}
       {activeView === "assistant" && (
         <>
-          <div className="mx-3 mt-2 border-t border-[#1E2535]" />
+          <div className="mx-3 mt-2 border-t " />
           <div className="px-3 pt-3 pb-1 flex items-center justify-between">
             <button
               onClick={() => setHistoryOpen((v) => !v)}
               className="flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase"
-              style={{ color: "#4A5568" }}
+              style={{ color: "#A69B8D" }}
             >
               <span>{historyOpen ? "▼" : "▶"}</span>
               <span>Assistant History</span>
@@ -158,10 +135,10 @@ export default function Sidebar({
             <button
               onClick={onNewConversation}
               className="text-xs px-1.5 py-0.5 rounded transition-colors"
-              style={{ color: "#6B7280" }}
+              style={{ color: "#7C7368" }}
               title="New chat"
-              onMouseEnter={(e) => { e.currentTarget.style.color = "#C9A55C"; e.currentTarget.style.background = "#161B27"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = "#6B7280"; e.currentTarget.style.background = "transparent"; }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = "#315A98"; e.currentTarget.style.background = "#FFFFFF"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = "#7C7368"; e.currentTarget.style.background = "transparent"; }}
             >
               + New
             </button>
@@ -170,7 +147,7 @@ export default function Sidebar({
           {historyOpen && (
             <div className="flex-1 overflow-y-auto py-1">
               {conversations.length === 0 ? (
-                <div className="text-center text-xs px-4 py-6" style={{ color: "#4A5568" }}>
+                <div className="text-center text-xs px-4 py-6" style={{ color: "#A69B8D" }}>
                   No chats yet. Click + New above.
                 </div>
               ) : null}
@@ -185,10 +162,10 @@ export default function Sidebar({
                       className="group flex items-center gap-1.5 mx-2 px-2 py-1 rounded-lg cursor-pointer text-xs"
                       onClick={() => toggleProject(proj.id)}
                     >
-                      <span style={{ color: "#6B7280" }}>{isCollapsed ? "▶" : "▼"}</span>
-                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: proj.color || "#C9A55C" }} />
-                      <span className="flex-1 truncate" style={{ color: "#9AA0B4" }}>{proj.name}</span>
-                      <span style={{ color: "#4A5568" }}>{convs.length}</span>
+                      <span style={{ color: "#7C7368" }}>{isCollapsed ? "▶" : "▼"}</span>
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: proj.color || "#315A98" }} />
+                      <span className="flex-1 truncate" style={{ color: "#6B6258" }}>{proj.name}</span>
+                      <span style={{ color: "#A69B8D" }}>{convs.length}</span>
                     </div>
                     {!isCollapsed && convs.map((conv) => (
                       <ConversationRow
@@ -212,7 +189,7 @@ export default function Sidebar({
                 <>
                   {projects.some((p) => (grouped.byProject.get(p.id) || []).length > 0) && (
                     <div className="px-3 pt-2 pb-0.5">
-                      <span className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "#4A5568" }}>
+                      <span className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "#A69B8D" }}>
                         Unassigned
                       </span>
                     </div>
@@ -241,23 +218,23 @@ export default function Sidebar({
       {activeView !== "assistant" && <div className="flex-1" />}
 
       {/* Footer */}
-      <div className="px-3 pb-4 pt-2 border-t border-[#1E2535]">
+      <div className="px-3 pb-4 pt-2 border-t ">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs min-w-0">
             <div
               className="w-1.5 h-1.5 rounded-full flex-shrink-0"
               style={{ background: connected ? "#22C55E" : "#EF4444" }}
             />
-            <span className="truncate" style={{ color: "#4A5568", maxWidth: 170 }}>
+            <span className="truncate" style={{ color: "#A69B8D", maxWidth: 170 }}>
               {connected ? activeModelLabel(settings) : offlineLabel(settings)}
             </span>
           </div>
           <button
             onClick={onOpenSettings}
             className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors"
-            style={{ color: "#4A5568" }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = "#C9A55C"; e.currentTarget.style.background = "#161B27"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = "#4A5568"; e.currentTarget.style.background = "transparent"; }}
+            style={{ color: "#A69B8D" }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = "#315A98"; e.currentTarget.style.background = "#FFFFFF"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = "#A69B8D"; e.currentTarget.style.background = "transparent"; }}
             title="Settings"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -283,9 +260,9 @@ function ConversationRow({ conv, active, hovered, setHovered, onSelect, onDelete
         onClick={onSelect}
         className="w-full text-left px-3 py-2 rounded-lg transition-colors duration-100 text-xs"
         style={{
-          background: active ? "#161B27" : "transparent",
-          color: active ? "#E2E8F0" : "#6B7280",
-          border: active ? "1px solid #2A3347" : "1px solid transparent",
+          background: active ? "#FFFFFF" : "transparent",
+          color: active ? "#1F2937" : "#7C7368",
+          border: active ? "1px solid #DDD6C8" : "1px solid transparent",
         }}
       >
         <div className="truncate pr-10">{conv.title || "Untitled"}</div>
@@ -306,13 +283,13 @@ function ConversationRow({ conv, active, hovered, setHovered, onSelect, onDelete
               {menuOpen && (
                 <div
                   className="absolute right-0 top-6 z-10 rounded-lg overflow-hidden text-xs min-w-[140px]"
-                  style={{ background: "#161B27", border: "1px solid #2A3347", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}
+                  style={{ background: "#FFFFFF", border: "1px solid #DDD6C8", boxShadow: "0 8px 24px rgba(15,23,42,0.12)" }}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <button
                     onClick={() => { onMove(null); setMenuOpen(false); }}
-                    className="w-full text-left px-3 py-1.5 hover:bg-[#1E2535]"
-                    style={{ color: "#9AA0B4" }}
+                    className="w-full text-left px-3 py-1.5 hover:bg-[#FFFFFF]"
+                    style={{ color: "#6B6258" }}
                   >
                     Unassigned
                   </button>
@@ -320,10 +297,10 @@ function ConversationRow({ conv, active, hovered, setHovered, onSelect, onDelete
                     <button
                       key={p.id}
                       onClick={() => { onMove(p.id); setMenuOpen(false); }}
-                      className="w-full text-left px-3 py-1.5 hover:bg-[#1E2535] flex items-center gap-2"
-                      style={{ color: "#E8E8E8" }}
+                      className="w-full text-left px-3 py-1.5 hover:bg-[#FFFFFF] flex items-center gap-2"
+                      style={{ color: "#1F2937" }}
                     >
-                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: p.color || "#C9A55C" }} />
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: p.color || "#315A98" }} />
                       {p.name}
                     </button>
                   ))}

@@ -14,9 +14,9 @@ body,
   height: 100%;
   width: 100%;
   overflow: hidden;
-  background-color: #0f1117;
-  color: #e8e8e8;
-  font-family: "DM Sans", sans-serif;
+  background-color: #fbfaf7;
+  color: #1f2937;
+  font-family: Inter, "DM Sans", "Segoe UI", system-ui, sans-serif;
 }
 
 /* Custom scrollbar */
@@ -27,11 +27,11 @@ body,
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2a3347;
+  background: #d8dee8;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3a4560;
+  background: #b7c6db;
 }
 
 /* Titlebar drag region */
@@ -46,8 +46,8 @@ body,
 .prose-legal h1,
 .prose-legal h2,
 .prose-legal h3 {
-  color: #c9a55c;
-  font-family: "DM Serif Display", serif;
+  color: #315a98;
+  font-family: Inter, "DM Sans", "Segoe UI", system-ui, sans-serif;
   margin-top: 1rem;
   margin-bottom: 0.5rem;
 }
@@ -62,16 +62,16 @@ body,
 }
 .prose-legal li { margin-bottom: 0.25rem; line-height: 1.6; }
 .prose-legal code {
-  background: #1e2535;
-  border: 1px solid #2a3347;
+  background: #f8fafc;
+  border: 1px solid #d8dee8;
   padding: 0.1rem 0.35rem;
   border-radius: 4px;
   font-size: 0.85em;
   font-family: "Courier New", monospace;
 }
 .prose-legal pre {
-  background: #1e2535;
-  border: 1px solid #2a3347;
+  background: #f8fafc;
+  border: 1px solid #d8dee8;
   padding: 1rem;
   border-radius: 8px;
   overflow-x: auto;
@@ -82,19 +82,19 @@ body,
   border: none;
   padding: 0;
 }
-.prose-legal strong { color: #d4b675; }
+.prose-legal strong { color: #1f2937; }
 .prose-legal blockquote {
-  border-left: 3px solid #c9a55c;
+  border-left: 3px solid #315a98;
   padding-left: 1rem;
-  color: #9aa0b4;
+  color: #475569;
   margin-bottom: 0.75rem;
 }
 .prose-legal a {
-  color: #c9a55c;
+  color: #315a98;
   text-decoration: underline;
 }
 .prose-legal hr {
-  border-color: #2a3347;
+  border-color: #d8dee8;
   margin: 1rem 0;
 }
 
@@ -106,11 +106,11 @@ body,
 .streaming-cursor::after {
   content: "▋";
   animation: blink 0.7s infinite;
-  color: #c9a55c;
+  color: #315a98;
   font-size: 0.9em;
 }
 
 /* Gradient fade for sidebar */
 .sidebar-gradient {
-  background: linear-gradient(180deg, #161b27 0%, #0f1117 100%);
+  background: linear-gradient(180deg, #f3efe6 0%, #fbfaf7 100%);
 }
