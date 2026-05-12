@@ -87,8 +87,8 @@ export default function ModelPicker({ settings, models, connected, onChange }) {
         ref={buttonRef}
         type="button"
         onClick={toggleOpen}
-        className="flex h-10 max-w-[220px] items-center gap-2 rounded-xl px-2.5 text-sm font-medium outline-none transition-colors hover:bg-[#F3F4F6] focus:bg-[#F3F4F6]"
-        style={{ color: "#111827" }}
+        className="flex h-10 max-w-[220px] items-center gap-2 rounded-xl px-2.5 text-sm font-medium outline-none transition-colors"
+        style={{ color: "var(--text)" }}
         title="Choose the model for this chat"
       >
         <span
@@ -98,7 +98,7 @@ export default function ModelPicker({ settings, models, connected, onChange }) {
         <span className="truncate">{selectedLabel}</span>
         <span
           className="text-xs transition-transform"
-          style={{ color: "#8A93A6", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
+          style={{ color: "var(--muted)", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
         >
           ^
         </span>
@@ -111,9 +111,9 @@ export default function ModelPicker({ settings, models, connected, onChange }) {
             ...(placement === "up"
               ? { bottom: "calc(100% + 10px)" }
               : { top: "calc(100% + 10px)" }),
-            background: "#FFFFFF",
-            border: "1px solid #E5E7EB",
-            boxShadow: "0 18px 45px rgba(15, 23, 42, 0.14)",
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
+            boxShadow: "0 18px 45px var(--shadow)",
             maxHeight: "min(380px, calc(100vh - 96px))",
             overflowY: "auto",
           }}
@@ -122,10 +122,10 @@ export default function ModelPicker({ settings, models, connected, onChange }) {
             const options = allOptions.filter((item) => item.provider === group.id);
             if (!options.length) return null;
             return (
-              <div key={group.id} className="border-b last:border-b-0" style={{ borderColor: "#E5E7EB" }}>
+              <div key={group.id} className="border-b last:border-b-0" style={{ borderColor: "var(--border)" }}>
                 <div
                   className="px-4 pb-2 pt-3 text-[11px] font-bold uppercase tracking-wide"
-                  style={{ color: "#9CA3AF" }}
+                  style={{ color: "var(--muted)" }}
                 >
                   {group.label}
                 </div>
@@ -142,12 +142,12 @@ export default function ModelPicker({ settings, models, connected, onChange }) {
                         disabled={unavailable}
                         className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left text-sm transition-colors"
                         style={{
-                          color: unavailable ? "#9CA3AF" : "#111827",
+                          color: unavailable ? "var(--muted-2)" : "var(--text)",
                           cursor: unavailable ? "not-allowed" : "pointer",
                           background: "transparent",
                         }}
                         onMouseEnter={(e) => {
-                          if (!unavailable) e.currentTarget.style.background = "#F9FAFB";
+                          if (!unavailable) e.currentTarget.style.background = "var(--surface-soft)";
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.background = "transparent";
@@ -165,7 +165,7 @@ export default function ModelPicker({ settings, models, connected, onChange }) {
                         {unavailable && (
                           <span
                             className="flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold"
-                            style={{ border: "1px solid #EF4444", color: "#EF4444" }}
+                            style={{ border: "1px solid var(--danger)", color: "var(--danger)" }}
                           >
                             !
                           </span>

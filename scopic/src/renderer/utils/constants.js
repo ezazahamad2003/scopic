@@ -104,6 +104,7 @@ Return the analysis in Markdown, using the following structure:
 
 export const DEFAULT_SETTINGS = {
   provider: "ollama",
+  theme: "light",
   ollamaUrl: "http://localhost:11434",
   model: "phi3",
   temperature: 0.7,

@@ -1,5 +1,6 @@
 import React from "react";
 import { renderMarkdown } from "../utils/markdown.js";
+import scopicBlackLogo from "../assets/scopic-black.png";
 
 export default function MessageBubble({ message, isStreaming }) {
   const isUser = message.role === "user";
@@ -15,11 +16,12 @@ export default function MessageBubble({ message, isStreaming }) {
         <div
           className="w-8 h-8 rounded-lg flex-shrink-0 mr-3 flex items-center justify-center text-xs font-bold mt-0.5"
           style={{
-            background: "linear-gradient(135deg, #315A98, #244876)",
-            color: "#FFFFFF",
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
+            color: "var(--text)",
           }}
         >
-          S
+          <img src={scopicBlackLogo} alt="" className="theme-invert-logo h-5 w-5 object-contain" />
         </div>
       )}
 
@@ -30,9 +32,9 @@ export default function MessageBubble({ message, isStreaming }) {
             : "rounded-2xl rounded-tl-sm px-4 py-3"
         }`}
         style={{
-          background: isUser ? "#1E3A5F" : "#FFFFFF",
-          border: isUser ? "1px solid #2A5080" : "1px solid #D8DEE8",
-          color: message.isError ? "#EF4444" : "#1F2937",
+          background: isUser ? "var(--surface-soft)" : "var(--surface)",
+          border: "1px solid var(--border)",
+          color: message.isError ? "var(--danger)" : "var(--text)",
         }}
       >
         {isThinking ? (
@@ -68,7 +70,7 @@ export default function MessageBubble({ message, isStreaming }) {
       {isUser && (
         <div
           className="w-8 h-8 rounded-lg flex-shrink-0 ml-3 flex items-center justify-center text-xs font-bold mt-0.5"
-          style={{ background: "#1E3A5F", border: "1px solid #2A5080", color: "#7DB3E8" }}
+          style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--text)" }}
         >
           U
         </div>

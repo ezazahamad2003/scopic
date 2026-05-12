@@ -83,33 +83,33 @@ export default function WorkflowsView({ onPickWorkflow, onRunPipeline }) {
   };
 
   return (
-    <main className="flex flex-1 flex-col overflow-hidden" style={{ background: "#FFFFFF" }}>
-      <div className="border-b px-10 py-7" style={{ borderColor: "#E5E7EB" }}>
+    <main className="flex flex-1 flex-col overflow-hidden" style={{ background: "var(--surface)" }}>
+      <div className="border-b px-10 py-7" style={{ borderColor: "var(--border)" }}>
         <div className="flex items-start justify-between gap-6">
           <h1
             className="text-3xl font-semibold"
-            style={{ fontFamily: "DM Serif Display, Georgia, serif", color: "#111827" }}
+            style={{ fontFamily: "DM Serif Display, Georgia, serif", color: "var(--text)" }}
           >
             Workflows
           </h1>
           <div className="flex items-center gap-3">
             <div
               className="flex h-9 items-center rounded-lg border px-3"
-              style={{ borderColor: "#E5E7EB", color: "#64748B" }}
+              style={{ borderColor: "var(--border)", color: "var(--muted)" }}
             >
               <span className="text-sm">Search</span>
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="ml-2 w-44 bg-transparent text-sm outline-none"
-                style={{ color: "#111827" }}
+                style={{ color: "var(--text)" }}
                 placeholder="workflow name"
               />
             </div>
             <button
               type="button"
               className="flex h-9 w-9 items-center justify-center rounded-lg text-xl transition-colors hover:bg-[#F3F4F6]"
-              style={{ color: "#64748B" }}
+              style={{ color: "var(--muted)" }}
               title="New workflow"
             >
               +
@@ -127,7 +127,7 @@ export default function WorkflowsView({ onPickWorkflow, onRunPipeline }) {
                   type="button"
                   onClick={() => setActiveTab(tab)}
                   className="text-sm font-medium transition-colors"
-                  style={{ color: active ? "#0F2748" : "#64748B" }}
+                  style={{ color: active ? "var(--text)" : "var(--muted)" }}
                 >
                   {tab}
                 </button>
@@ -140,7 +140,7 @@ export default function WorkflowsView({ onPickWorkflow, onRunPipeline }) {
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
               className="bg-transparent text-sm outline-none"
-              style={{ color: "#475569" }}
+              style={{ color: "var(--text-soft)" }}
             >
               {TYPE_OPTIONS.map((option) => (
                 <option key={option}>{option}</option>
@@ -150,7 +150,7 @@ export default function WorkflowsView({ onPickWorkflow, onRunPipeline }) {
               value={practiceFilter}
               onChange={(e) => setPracticeFilter(e.target.value)}
               className="bg-transparent text-sm outline-none"
-              style={{ color: "#475569" }}
+              style={{ color: "var(--text-soft)" }}
             >
               {PRACTICE_OPTIONS.map((option) => (
                 <option key={option}>{option}</option>
@@ -163,7 +163,7 @@ export default function WorkflowsView({ onPickWorkflow, onRunPipeline }) {
       <div className="flex-1 overflow-auto">
         <table className="w-full border-collapse text-left">
           <thead>
-            <tr className="border-b text-sm" style={{ borderColor: "#E5E7EB", color: "#64748B" }}>
+            <tr className="border-b text-sm" style={{ borderColor: "var(--border)", color: "var(--muted)" }}>
               <th className="w-12 px-5 py-3 font-medium">
                 <input type="checkbox" aria-label="Select all workflows" />
               </th>
@@ -178,8 +178,8 @@ export default function WorkflowsView({ onPickWorkflow, onRunPipeline }) {
             {filteredRows.map((row) => (
               <tr
                 key={row.id}
-                className="group border-b transition-colors hover:bg-[#FAFAFA]"
-                style={{ borderColor: "#F1F5F9" }}
+                className="group border-b transition-colors"
+                style={{ borderColor: "var(--border-soft)" }}
               >
                 <td className="px-5 py-4">
                   <input type="checkbox" aria-label={`Select ${row.name}`} />
@@ -189,11 +189,11 @@ export default function WorkflowsView({ onPickWorkflow, onRunPipeline }) {
                     type="button"
                     onClick={() => handleRun(row)}
                     className="text-left text-base font-medium transition-colors hover:text-[#315A98]"
-                    style={{ color: "#071A33" }}
+                    style={{ color: "var(--text)" }}
                   >
                     {row.name}
                   </button>
-                  <div className="mt-1 max-w-2xl truncate text-xs" style={{ color: "#64748B" }}>
+                  <div className="mt-1 max-w-2xl truncate text-xs" style={{ color: "var(--muted)" }}>
                     {row.description}
                   </div>
                 </td>
@@ -206,11 +206,11 @@ export default function WorkflowsView({ onPickWorkflow, onRunPipeline }) {
                     {row.type}
                   </span>
                 </td>
-                <td className="px-3 py-4 text-sm" style={{ color: "#334155" }}>
+                <td className="px-3 py-4 text-sm" style={{ color: "var(--text-soft)" }}>
                   {row.practice}
                 </td>
                 <td className="px-3 py-4">
-                  <span className="inline-flex items-center gap-2 text-sm" style={{ color: "#334155" }}>
+                  <span className="inline-flex items-center gap-2 text-sm" style={{ color: "var(--text-soft)" }}>
                     <span className="text-base">✺</span>
                     {row.source}
                   </span>
@@ -220,7 +220,7 @@ export default function WorkflowsView({ onPickWorkflow, onRunPipeline }) {
                     type="button"
                     onClick={() => handleRun(row)}
                     className="rounded-lg px-2 py-1 text-sm opacity-60 transition-opacity hover:opacity-100"
-                    style={{ color: "#0F2748" }}
+                    style={{ color: "var(--text)" }}
                     title={`Run ${row.name}`}
                   >
                     ...
@@ -232,7 +232,7 @@ export default function WorkflowsView({ onPickWorkflow, onRunPipeline }) {
         </table>
 
         {filteredRows.length === 0 && (
-          <div className="flex h-56 items-center justify-center text-sm" style={{ color: "#64748B" }}>
+          <div className="flex h-56 items-center justify-center text-sm" style={{ color: "var(--muted)" }}>
             No workflows match these filters.
           </div>
         )}

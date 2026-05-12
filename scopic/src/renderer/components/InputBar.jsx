@@ -168,10 +168,10 @@ export default function InputBar({
       ? "Ask a question about your documents..."
       : offlineHint;
 
-  const actionStyle = { color: "#8A93A6" };
+  const actionStyle = { color: "var(--muted)" };
 
   return (
-    <div className="px-6 pt-3 pb-5" style={{ background: "#FBFAF7" }}>
+    <div className="px-6 pt-3 pb-5" style={{ background: "var(--bg)" }}>
       {!connected && (
         <div
           className="mx-auto mb-3 max-w-5xl px-4 py-3 rounded-lg text-sm"
@@ -215,7 +215,7 @@ export default function InputBar({
 
       <div
         className="mx-auto flex max-w-5xl flex-col gap-5 rounded-3xl px-5 py-5"
-        style={{ background: "#FFFFFF", border: "1px solid #D8DEE8" }}
+        style={{ background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "0 18px 45px var(--shadow)" }}
       >
         <input ref={fileInputRef} type="file" className="hidden" accept={ACCEPT_ATTR} onChange={handleFileChange} />
 
@@ -228,7 +228,7 @@ export default function InputBar({
           disabled={!connected || isStreaming}
           rows={1}
           className="w-full bg-transparent text-base placeholder-gray-400 resize-none outline-none leading-relaxed"
-          style={{ minHeight: 32, maxHeight: 170, overflowY: "auto", color: "#111827" }}
+          style={{ minHeight: 32, maxHeight: 170, overflowY: "auto", color: "var(--text)" }}
         />
 
         <div className="flex items-center justify-between gap-3">
@@ -237,7 +237,7 @@ export default function InputBar({
               onClick={() => {
                 fileInputRef.current?.click();
               }}
-              className="text-sm font-medium transition-colors hover:text-[#315A98]"
+              className="text-sm font-medium transition-colors"
               style={actionStyle}
               title="Add documents"
               type="button"
@@ -246,7 +246,7 @@ export default function InputBar({
             </button>
             <button
               onClick={onOpenProjects}
-              className="text-sm font-medium transition-colors hover:text-[#315A98]"
+              className="text-sm font-medium transition-colors"
               style={actionStyle}
               title="Open projects"
               type="button"
@@ -255,7 +255,7 @@ export default function InputBar({
             </button>
             <button
               onClick={onOpenWorkflows}
-              className="text-sm font-medium transition-colors hover:text-[#315A98]"
+              className="text-sm font-medium transition-colors"
               style={actionStyle}
               title="Open workflows"
               type="button"
@@ -276,8 +276,8 @@ export default function InputBar({
               disabled={!isStreaming && !canSend}
               className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl transition-all duration-150"
               style={{
-                background: isStreaming ? "#DC2626" : canSend ? "#111827" : "#E5E7EB",
-                color: isStreaming || canSend ? "#FFFFFF" : "#94A3B8",
+                background: isStreaming ? "var(--danger)" : canSend ? "var(--button)" : "var(--surface-soft)",
+                color: isStreaming || canSend ? "var(--button-text)" : "var(--muted-2)",
                 cursor: isStreaming || canSend ? "pointer" : "not-allowed",
                 boxShadow: canSend ? "0 8px 18px rgba(17, 24, 39, 0.2)" : "none",
               }}
@@ -293,7 +293,7 @@ export default function InputBar({
         </div>
       </div>
 
-      <p className="text-center text-xs mt-3" style={{ color: "#6B7280" }}>
+      <p className="text-center text-xs mt-3" style={{ color: "var(--muted)" }}>
         AI can make mistakes. Answers are not legal advice.
       </p>
     </div>

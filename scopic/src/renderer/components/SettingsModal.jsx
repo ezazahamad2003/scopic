@@ -130,15 +130,15 @@ export default function SettingsModal({ settings, models, onSave, onClose, updat
       <div
         className="w-full max-w-lg rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto"
         style={{
-          background: "#FFFFFF",
-          border: "1px solid #D8DEE8",
-          boxShadow: "0 24px 64px rgba(15,23,42,0.16)",
+          background: "var(--surface)",
+          border: "1px solid var(--border)",
+          boxShadow: "0 24px 64px var(--shadow)",
         }}
       >
         <div className="flex items-center justify-between mb-6">
           <h2
             className="text-xl font-semibold"
-            style={{ fontFamily: "DM Serif Display, serif", color: "#315A98" }}
+            style={{ fontFamily: "DM Serif Display, serif", color: "var(--text)" }}
           >
             Settings
           </h2>
@@ -148,6 +148,37 @@ export default function SettingsModal({ settings, models, onSave, onClose, updat
           >
             ✕
           </button>
+        </div>
+
+        {/* Theme picker */}
+        <div className="mb-5">
+          <label className="block text-xs font-medium text-gray-400 mb-2 uppercase tracking-wide">
+            Theme
+          </label>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { id: "light", label: "Light" },
+              { id: "dark", label: "Dark" },
+              { id: "system", label: "System" },
+            ].map((theme) => {
+              const active = (form.theme || "light") === theme.id;
+              return (
+                <button
+                  key={theme.id}
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, theme: theme.id }))}
+                  className="rounded-lg px-3 py-2 text-sm font-medium transition-colors"
+                  style={{
+                    background: active ? "var(--surface-soft)" : "var(--surface)",
+                    border: active ? "1px solid var(--accent)" : "1px solid var(--border)",
+                    color: active ? "var(--text)" : "var(--muted)",
+                  }}
+                >
+                  {theme.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Provider picker */}

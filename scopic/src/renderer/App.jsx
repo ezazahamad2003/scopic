@@ -29,6 +29,27 @@ export default function App() {
 
   const { connected, models, settings, saveSettings, recheckConnection } = useOllama();
   const { projects, upsertProject, deleteProject } = useProjects();
+  const [systemTheme, setSystemTheme] = useState(() =>
+    window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ? "dark" : "light"
+  );
+  const themePreference = settings?.theme || "light";
+  const resolvedTheme = themePreference === "system" ? systemTheme : themePreference;
+
+  useEffect(() => {
+    const media = window.matchMedia?.("(prefers-color-scheme: dark)");
+    if (!media) return undefined;
+    const handleChange = (event) => setSystemTheme(event.matches ? "dark" : "light");
+    media.addEventListener?.("change", handleChange);
+    media.addListener?.(handleChange);
+    return () => {
+      media.removeEventListener?.("change", handleChange);
+      media.removeListener?.(handleChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = resolvedTheme;
+  }, [resolvedTheme]);
 
   const activeProject = useMemo(
     () => projects.find((p) => p.id === activeProjectId) || null,
@@ -178,12 +199,13 @@ export default function App() {
   return (
     <div
       className="flex h-screen w-screen overflow-hidden select-none"
-      style={{ background: "#F7F5F0" }}
+      data-theme={resolvedTheme}
+      style={{ background: "var(--app-bg)", color: "var(--text)" }}
     >
       {/* Custom Titlebar */}
       <div
         className="titlebar-drag fixed top-0 left-0 right-0 h-8 z-50 flex items-center justify-end"
-        style={{ background: "#F7F5F0", borderBottom: "1px solid #E7E0D2" }}
+        style={{ background: "var(--app-bg)", borderBottom: "1px solid var(--border-soft)" }}
       >
         <div className="titlebar-no-drag flex items-center h-full">
           <button
@@ -217,6 +239,7 @@ export default function App() {
           activeView={activeView}
           connected={connected}
           settings={settings}
+          theme={resolvedTheme}
           onChangeView={setActiveView}
           onSelectConversation={handleSelectConversation}
           onNewConversation={handleNewConversation}

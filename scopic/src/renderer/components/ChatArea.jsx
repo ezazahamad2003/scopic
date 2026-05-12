@@ -41,21 +41,21 @@ export default function ChatArea({
   return (
     <main
       className="flex flex-col flex-1 overflow-hidden"
-      style={{ background: "#FBFAF7" }}
+      style={{ background: "var(--bg)" }}
     >
       {/* Project context banner */}
       {activeProject && (
         <div
           className="flex items-center justify-center gap-2 py-1.5 text-xs font-medium border-b"
           style={{
-            background: "#F8FAFC",
-            borderColor: "#D8DEE8",
-            color: "#315A98",
+            background: "var(--surface-soft)",
+            borderColor: "var(--border)",
+            color: "var(--accent-strong)",
           }}
         >
           <span
             className="w-2 h-2 rounded-full"
-            style={{ background: activeProject.color || "#315A98" }}
+            style={{ background: activeProject.color || "var(--accent)" }}
           />
           <span>Project: {activeProject.name}</span>
           {onClearProject && (
@@ -75,9 +75,9 @@ export default function ChatArea({
         <div
           className="flex items-center justify-center gap-2 py-1.5 text-xs font-medium border-b"
           style={{
-            background: "#0D1528",
-            borderColor: "#D6E1F5",
-            color: "#315A98",
+            background: "var(--surface-soft)",
+            borderColor: "var(--border)",
+            color: "var(--accent-strong)",
           }}
         >
           <span>⚖️</span>
