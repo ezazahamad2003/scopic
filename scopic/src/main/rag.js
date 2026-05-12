@@ -100,16 +100,21 @@ async function hybridRetrieve(query, projectId, { ollamaUrl, embedModel = DEFAUL
     queryVec = null;
   }
   if (queryVec) {
-    const candidates = db.retrieval.vectorCandidates(documentIds, embedModel, 500);
-    vector = candidates
-      .map((c) => {
-        let v;
-        try { v = JSON.parse(c.embedding); } catch { return null; }
-        return { ...c, score: cosine(queryVec, v) };
-      })
-      .filter(Boolean)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, VECTOR_POOL);
+    const accelerated = db.retrieval.vectorSearch(documentIds, embedModel, queryVec, VECTOR_POOL);
+    if (accelerated.length) {
+      vector = accelerated.map((row) => ({ ...row, score: 1 / (1 + row.score) }));
+    } else {
+      const candidates = db.retrieval.vectorCandidates(documentIds, embedModel, 500);
+      vector = candidates
+        .map((c) => {
+          let v;
+          try { v = JSON.parse(c.embedding); } catch { return null; }
+          return { ...c, score: cosine(queryVec, v) };
+        })
+        .filter(Boolean)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, VECTOR_POOL);
+    }
   }
 
   // 3. Reciprocal Rank Fusion.

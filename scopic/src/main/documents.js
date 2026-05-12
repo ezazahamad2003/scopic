@@ -13,6 +13,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const db = require("./db");
+const ocr = require("./ocr");
 
 let mammoth = null;
 let PDFParse = null;
@@ -28,6 +29,7 @@ let docsRoot = null;
 function init(userDataDir) {
   docsRoot = path.join(userDataDir, "documents");
   if (!fs.existsSync(docsRoot)) fs.mkdirSync(docsRoot, { recursive: true });
+  ocr.init(userDataDir);
 }
 
 function pathsFor(sha) {
@@ -59,6 +61,7 @@ async function parse(buf, filename) {
   if (ext === ".pdf")  return parsePdf(buf);
   if (ext === ".docx") return parseDocx(buf);
   if (ext === ".xlsx" || ext === ".xls") return parseXlsx(buf);
+  if ([".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".webp"].includes(ext)) return parseImage(buf);
   return parseText(buf);
 }
 
@@ -78,10 +81,50 @@ async function parsePdf(buf) {
       pages.push({ pageNumber: i + 1, startChar: start, endChar: text.length });
     }
     if (!text && result?.text) text = result.text;
-    return { text: text.trim(), pages, parser: "pdf-parse" };
+    const pageCount = result?.pages?.length || pages.length;
+    const normalized = text.trim();
+    if (shouldOcrPdf(normalized, pageCount)) {
+      const ocrResult = await tryOcrPdf(buf, normalized, pages, pageCount);
+      if (ocrResult) return ocrResult;
+    }
+    return { text: normalized, pages, parser: "pdf-parse" };
   } finally {
     try { await parser.destroy(); } catch {}
   }
+}
+
+function shouldOcrPdf(text, pageCount) {
+  if (!ocr.available()) return false;
+  const pages = Math.max(1, pageCount || 1);
+  return text.length < Math.max(200, pages * 40);
+}
+
+async function tryOcrPdf(buf, fallbackText, fallbackPages, fallbackPageCount) {
+  try {
+    const result = await ocr.recognizePdf(buf);
+    if (result.text && result.text.length > fallbackText.length) {
+      return {
+        text: result.text,
+        pages: result.pages.length ? result.pages : fallbackPages,
+        parser: result.parser,
+      };
+    }
+  } catch {}
+  return fallbackText ? {
+    text: fallbackText,
+    pages: fallbackPages,
+    parser: fallbackPageCount ? "pdf-parse:ocr-unavailable" : "pdf-parse",
+  } : null;
+}
+
+async function parseImage(buf) {
+  if (!ocr.available()) throw new Error("Local OCR unavailable");
+  const text = await ocr.recognizeImage(buf);
+  return {
+    text,
+    pages: [{ pageNumber: 1, startChar: 0, endChar: text.length }],
+    parser: "tesseract-ocr",
+  };
 }
 
 async function parseDocx(buf) {

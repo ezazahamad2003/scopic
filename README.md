@@ -43,8 +43,9 @@ The whole stack is designed so that a small-firm lawyer or a privacy-strict prac
 - Move conversations between projects from the sidebar.
 
 ### Documents
-- Supported formats: **PDF, DOCX, XLSX/XLS, CSV/TSV, TXT, MD**.
-- Parsers run in-process — no external LibreOffice or OCR daemon required.
+- Supported formats: **PDF, scanned PDF, PNG/JPG/TIFF/WebP/BMP, DOCX, XLSX/XLS, CSV/TSV, TXT, MD**.
+- Parsers run in-process — no external LibreOffice, MinIO, Chroma, LanceDB, or OCR daemon required.
+- Scanned PDFs automatically fall back to **local Tesseract OCR** when normal PDF text extraction finds almost no text. English traineddata is bundled, so OCR does not download language files at runtime.
 - Section-aware structure detection for legal docs (`Article I`, `Section 5.2`, `(a)(ii)`, numeric outlines). The detected section tree powers both citations and the Deep Review agent.
 - Section-aware chunking (~800 tokens, 100 overlap, sentence-boundary aware). Each chunk is prefixed with its section path so the model always sees self-contained context.
 - Documents are written to `userData/documents/<sha256>/{original.<ext>, extracted.txt, chunks.json, meta.json}` so you can inspect and back them up directly.
@@ -61,7 +62,7 @@ Every chat message inside a project is routed through a tiny decision tree:
 
 Hybrid RAG combines:
 - **BM25** keyword retrieval over SQLite's FTS5 index — catches exact legal terminology.
-- **Vector cosine** over locally-computed embeddings — catches paraphrases (`indemnify` ↔ `hold harmless`).
+- **SQLite-native vector search** via `sqlite-vec` for nomic-embed-text embeddings, with the prior JSON/cosine path kept as a compatibility fallback.
 - **Reciprocal Rank Fusion** (k = 60) merges both rankings.
 - **Top 8 excerpts** are sent to the chat model with bracketed `[n]` citations.
 
@@ -156,13 +157,15 @@ There is no Scopic server. There is no telemetry. The chip in the chat header al
 - **Inline SVG logo** — crisp at any size, follows `currentColor` so it adapts to theme.
 
 **Main-process data layer**
-- **better-sqlite3 11** — synchronous, in-process SQLite. WAL journal. Foreign keys on. No daemon, no port.
+- **better-sqlite3 12** — synchronous, in-process SQLite. WAL journal. Foreign keys on. No daemon, no port.
 - **SQLite FTS5** — full-text search over chunks and messages. Porter stemmer, unicode tokenizer, diacritic stripping. Maintained automatically via INSERT/UPDATE/DELETE triggers.
+- **sqlite-vec** — optional in-process vector index for 768-dimensional `nomic-embed-text` embeddings. If the extension is unavailable, Scopic automatically falls back to JSON-stored vectors and JS cosine.
 - **Filesystem documents store** — content-addressed under `userData/documents/<sha256>/`. The DB holds only metadata; bytes live on disk.
 - **electron-store** — tiny KV for settings only (no longer used for conversations or projects).
 
 **Document parsers** (all in-process Node libraries — no external binaries)
 - **pdf-parse** — PDF text extraction with per-page offsets, used to anchor citations.
+- **pdf.js + @napi-rs/canvas + Tesseract.js** — scanned-PDF/image OCR, local only, with bundled English traineddata.
 - **mammoth** — DOCX to plain text.
 - **exceljs** — XLSX / XLS workbooks; each sheet becomes a synthetic "page".
 - **plain decoder** for TXT / MD / CSV / TSV.
@@ -175,16 +178,18 @@ There is no Scopic server. There is no telemetry. The chip in the chat header al
 5. Chunk inside sections — ~800 tokens, 100 overlap, sentence-boundary aware.
 6. Prefix every chunk with its section path so it's self-contained.
 7. Insert into `document_chunks`. FTS5 trigger auto-populates `chunks_fts`.
-8. Queue embedding pass (background).
+8. For scanned PDFs/images, run local OCR before structure detection so the same tree/chunk pipeline is reused.
+9. Queue embedding pass (background).
 
 **Embeddings**
 - **Ollama `/api/embeddings`** with **nomic-embed-text** (768-dim) as the default.
-- Embeddings stored as JSON arrays in SQLite; cosine similarity runs in JS over the FTS5-narrowed candidate pool (cheap because we only score ~25 vectors per query, not the whole corpus).
+- Embeddings are stored as JSON arrays for compatibility and mirrored into a `sqlite-vec` virtual table when the local extension is available.
+- Vector retrieval uses SQLite-native nearest-neighbor search first, then falls back to JS cosine if needed.
 - Cloud embeddings (OpenAI / Voyage) are an opt-in setting — disabled by default to keep the privacy story intact.
 
 **Retrieval**
 - **BM25** via `bm25(chunks_fts)` — pool of 25.
-- **Vector cosine** over the BM25 pool + same-document candidates — pool of 25.
+- **Vector search** through `sqlite-vec` when available, or JS cosine over same-document candidates as a fallback — pool of 25.
 - **Reciprocal Rank Fusion** with `k = 60` merges both rankings → final top **8**.
 - **Project isolation** is enforced at the SQL level: every retrieval query has `WHERE document_id IN (project's docs)`. No JS post-filter.
 - Optional **query rewrite** before retrieval — one Ollama call rewrites context-dependent questions into self-contained ones.
@@ -259,7 +264,7 @@ Recommended chat models by hardware:
 git clone https://github.com/ezazahamad2003/scopic.git
 cd scopic/scopic
 npm install
-npm run rebuild          # rebuild native modules (better-sqlite3) against the Electron ABI
+npm run rebuild          # rebuild native modules (better-sqlite3/sqlite-vec support) against the Electron ABI
 ollama pull phi3
 ollama pull nomic-embed-text
 npm run dev              # starts Vite + Electron
@@ -274,6 +279,7 @@ Output lands in `scopic/dist/`.
 The codebase has three big modules in `src/main/`:
 - [`db.js`](scopic/src/main/db.js) — schema, migrations, repositories, retrieval helpers.
 - [`documents.js`](scopic/src/main/documents.js) — ingest, parse, structure detection, chunker, GC.
+- [`ocr.js`](scopic/src/main/ocr.js) — local scanned-PDF/image OCR via pdf.js, canvas, and bundled Tesseract data.
 - [`rag.js`](scopic/src/main/rag.js) — embeddings, hybrid retrieval, prompt composer, tree-walk agent.
 
 The renderer is in `src/renderer/` with hooks in `hooks/` and components in `components/`.

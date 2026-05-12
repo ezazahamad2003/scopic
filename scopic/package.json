@@ -1,6 +1,6 @@
 {
   "name": "scopic",
-  "version": "1.9.1",
+  "version": "1.9.2",
   "description": "Scopic - Legal AI assistant. Local-first via Ollama, with optional Anthropic/OpenAI/Gemini support.",
   "main": "src/main/index.js",
   "author": "Scopic",
@@ -16,12 +16,17 @@
     "rebuild": "electron-builder install-app-deps"
   },
   "dependencies": {
+    "@napi-rs/canvas": "^1.0.0",
+    "@tesseract.js-data/eng": "^1.0.0",
     "better-sqlite3": "^12.9.0",
     "electron-store": "^8.2.0",
     "electron-updater": "^6.8.3",
     "exceljs": "^4.4.0",
     "mammoth": "^1.12.0",
-    "pdf-parse": "^2.4.5"
+    "pdf-parse": "^2.4.5",
+    "pdfjs-dist": "^5.7.284",
+    "sqlite-vec": "^0.1.9",
+    "tesseract.js": "^7.0.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
@@ -60,7 +65,8 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "build/icon.ico"
+      "icon": "build/icon.ico",
+      "signAndEditExecutable": false
     },
     "nsis": {
       "oneClick": true,

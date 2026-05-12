@@ -14,6 +14,8 @@ const fs = require("fs");
 
 let db = null;
 let dbPath = null;
+let sqliteVecAvailable = false;
+const SQLITE_VEC_DIMENSIONS = 768; // nomic-embed-text
 
 const MIGRATIONS = [
   // v1 — initial schema. Everything we need for Phase 1+2+3+4.
@@ -148,7 +150,10 @@ function open(userDataDir) {
   db.pragma("foreign_keys = ON");
   db.pragma("synchronous = NORMAL");
   db.pragma("temp_store = MEMORY");
+  loadVectorExtension();
   runMigrations();
+  ensureVectorTable();
+  backfillVectorTable();
   return db;
 }
 
@@ -177,6 +182,68 @@ function runMigrations() {
         .run(i + 1, Date.now());
     });
     apply();
+  }
+}
+
+function loadVectorExtension() {
+  try {
+    const sqliteVec = require("sqlite-vec");
+    sqliteVec.load(db);
+    db.prepare("SELECT vec_version() AS version").get();
+    sqliteVecAvailable = true;
+  } catch {
+    sqliteVecAvailable = false;
+  }
+}
+
+function ensureVectorTable() {
+  if (!sqliteVecAvailable) return;
+  try {
+    db.exec(`
+      CREATE VIRTUAL TABLE IF NOT EXISTS chunk_vectors
+      USING vec0(embedding float[${SQLITE_VEC_DIMENSIONS}]);
+    `);
+  } catch {
+    sqliteVecAvailable = false;
+  }
+}
+
+function backfillVectorTable() {
+  if (!sqliteVecAvailable) return;
+  try {
+    const rows = db.prepare(`
+      SELECT id, embedding
+      FROM document_chunks
+      WHERE embedding IS NOT NULL
+        AND id NOT IN (SELECT rowid FROM chunk_vectors)
+    `).all();
+    const insert = db.prepare("INSERT OR REPLACE INTO chunk_vectors(rowid, embedding) VALUES (?, ?)");
+    const tx = db.transaction(() => {
+      for (const row of rows) {
+        let embedding = null;
+        try { embedding = JSON.parse(row.embedding); } catch {}
+        if (Array.isArray(embedding) && embedding.length === SQLITE_VEC_DIMENSIONS) {
+          insert.run(vectorRowId(row.id), vectorBlob(embedding));
+        }
+      }
+    });
+    tx();
+  } catch {}
+}
+
+function vectorBlob(embedding) {
+  return Float32Array.from(embedding);
+}
+
+function vectorRowId(id) {
+  return BigInt(id);
+}
+
+function deleteChunkVectors(chunkIds) {
+  if (!sqliteVecAvailable || !chunkIds?.length) return;
+  const del = db.prepare("DELETE FROM chunk_vectors WHERE rowid = ?");
+  for (const id of chunkIds) {
+    try { del.run(vectorRowId(id)); } catch {}
   }
 }
 
@@ -393,6 +460,8 @@ const documentsRepo = {
     db.prepare("UPDATE documents SET short_summary = ? WHERE id = ?").run(summary, id);
   },
   remove(id) {
+    const chunkIds = db.prepare("SELECT id FROM document_chunks WHERE document_id = ?").all(id).map((r) => r.id);
+    deleteChunkVectors(chunkIds);
     db.prepare("DELETE FROM documents WHERE id = ?").run(id);
   },
   insertChunks(documentId, chunks) {
@@ -403,6 +472,8 @@ const documentsRepo = {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
     const tx = db.transaction(() => {
+      const oldChunkIds = db.prepare("SELECT id FROM document_chunks WHERE document_id = ?").all(documentId).map((r) => r.id);
+      deleteChunkVectors(oldChunkIds);
       db.prepare("DELETE FROM document_chunks WHERE document_id = ?").run(documentId);
       for (const c of chunks) {
         ins.run(
@@ -431,8 +502,15 @@ const documentsRepo = {
     `).all(model, limit);
   },
   setChunkEmbedding(chunkId, embedding, model) {
+    const json = JSON.stringify(embedding);
     db.prepare("UPDATE document_chunks SET embedding = ?, embed_model = ? WHERE id = ?")
-      .run(JSON.stringify(embedding), model, chunkId);
+      .run(json, model, chunkId);
+    if (sqliteVecAvailable && Array.isArray(embedding) && embedding.length === SQLITE_VEC_DIMENSIONS) {
+      try {
+        db.prepare("INSERT OR REPLACE INTO chunk_vectors(rowid, embedding) VALUES (?, ?)")
+          .run(vectorRowId(chunkId), vectorBlob(embedding));
+      } catch {}
+    }
   },
 };
 
@@ -514,6 +592,26 @@ const retrieval = {
       LIMIT ?
     `).all(...documentIds, embedModel, limit);
   },
+  vectorSearch(documentIds, embedModel, queryEmbedding, limit = 25) {
+    if (!sqliteVecAvailable || !documentIds?.length || !Array.isArray(queryEmbedding)) return [];
+    if (queryEmbedding.length !== SQLITE_VEC_DIMENSIONS) return [];
+    const placeholders = documentIds.map(() => "?").join(",");
+    try {
+      return db.prepare(`
+        SELECT c.id, c.document_id AS documentId, c.section_path AS sectionPath,
+               c.page_number AS pageNumber, c.text, c.ordinal, v.distance AS score
+        FROM chunk_vectors v
+        JOIN document_chunks c ON c.id = v.rowid
+        WHERE v.embedding MATCH ?
+          AND k = ?
+          AND c.document_id IN (${placeholders})
+          AND c.embed_model = ?
+        ORDER BY v.distance ASC
+      `).all(vectorBlob(queryEmbedding), limit, ...documentIds, embedModel);
+    } catch {
+      return [];
+    }
+  },
   // Project's document ids.
   projectDocumentIds(projectId) {
     if (!projectId) return [];
@@ -533,4 +631,8 @@ module.exports = {
   documents: documentsRepo,
   settings: settingsRepo,
   retrieval,
+  vector: {
+    available() { return sqliteVecAvailable; },
+    dimensions: SQLITE_VEC_DIMENSIONS,
+  },
 };
