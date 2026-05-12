@@ -1,6 +1,16 @@
 import React, { useEffect, useRef } from "react";
 import MessageBubble from "./MessageBubble.jsx";
 import InputBar from "./InputBar.jsx";
+import ScopicLogo from "./ScopicLogo.jsx";
+
+function greetingForNow() {
+  const h = new Date().getHours();
+  if (h < 5) return "Working late";
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  if (h < 21) return "Good evening";
+  return "Working late";
+}
 
 const MODE_LABELS = {
   document_review: "Document Review",
@@ -93,6 +103,36 @@ export default function ChatArea({
 
       {showWelcome ? (
         <div className="flex flex-1 flex-col justify-center pb-16">
+          <div className="mx-auto w-full max-w-5xl px-6 mb-6 flex flex-col items-center text-center select-none">
+            <div
+              className="flex items-center justify-center rounded-2xl mb-4"
+              style={{
+                width: 72,
+                height: 72,
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+                boxShadow: "0 12px 30px var(--shadow)",
+              }}
+            >
+              <ScopicLogo size={44} color="var(--text)" title="Scopic" />
+            </div>
+            <h1
+              className="text-3xl"
+              style={{
+                fontFamily: "DM Serif Display, Georgia, serif",
+                color: "var(--text)",
+                letterSpacing: "-0.01em",
+              }}
+            >
+              {greetingForNow()} — welcome to <span style={{ color: "var(--accent-strong)" }}>Scopic</span>.
+            </h1>
+            <p
+              className="text-sm mt-2 max-w-md"
+              style={{ color: "var(--muted)" }}
+            >
+              Hi from Scopic. Ask a legal question, drop in a contract, or pick a workflow below.
+            </p>
+          </div>
           <InputBar
             onSend={onSend}
             onStop={onStop}

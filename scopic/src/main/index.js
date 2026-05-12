@@ -70,7 +70,21 @@ const activeChatAborts = new Map();
 
 let mainWindow = null;
 
+function resolveAppIcon() {
+  const candidates = [
+    path.join(__dirname, "..", "..", "build", "icon.ico"),
+    path.join(__dirname, "..", "..", "build", "icon.png"),
+    path.join(process.resourcesPath || "", "build", "icon.ico"),
+    path.join(process.resourcesPath || "", "build", "icon.png"),
+  ];
+  for (const p of candidates) {
+    try { if (fs.existsSync(p)) return p; } catch {}
+  }
+  return undefined;
+}
+
 function createWindow() {
+  const iconPath = resolveAppIcon();
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -80,6 +94,7 @@ function createWindow() {
     backgroundColor: "#0F1117",
     titleBarStyle: "hiddenInset",
     frame: false,
+    icon: iconPath,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,

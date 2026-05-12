@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from "react";
-import scopicBlackLogo from "../assets/scopic-black.png";
-import scopicWhiteLogo from "../assets/scopic-white.png";
+import ScopicLogo from "./ScopicLogo.jsx";
 
 const PROVIDER_LABELS = {
   ollama: "Ollama",
@@ -79,20 +78,26 @@ export default function Sidebar({
     >
       {/* Header */}
       <div className="px-5 pt-5 pb-4 border-b" style={{ borderColor: "var(--border)" }}>
-        <div className="flex items-center gap-2.5">
-          <img
-            src={theme === "dark" ? scopicWhiteLogo : scopicBlackLogo}
-            alt=""
-            className="h-7 w-7 object-contain"
-          />
+        <div className="flex items-center gap-3">
+          <div
+            className="flex items-center justify-center rounded-xl"
+            style={{
+              width: 40,
+              height: 40,
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+            }}
+          >
+            <ScopicLogo size={26} color="var(--text)" title="Scopic" />
+          </div>
           <span
-            className="text-2xl font-semibold"
+            className="text-2xl font-semibold leading-none"
             style={{ color: "var(--text)", fontFamily: "DM Serif Display, Georgia, serif" }}
           >
             Scopic
           </span>
         </div>
-        <p className="text-xs mt-1" style={{ color: "var(--muted)" }}>
+        <p className="text-xs mt-2" style={{ color: "var(--muted)" }}>
           Open-source legal workspace
         </p>
       </div>
