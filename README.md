@@ -15,6 +15,62 @@ Scopic runs as a desktop app on your laptop. Your projects, conversations, and t
 
 It works offline against [Ollama](https://ollama.com), and optionally lets you bring your own API key for **Anthropic Claude**, **OpenAI**, or **Google Gemini** for the chat layer. **Embeddings always stay local.**
 
+### Local AI in 3 commands
+
+You need two things on your machine: **Ollama** (to run the AI) and a **model** for Ollama to load. Scopic talks to Ollama on `http://localhost:11434` out of the box — no environment variables needed for the default setup.
+
+**1. Install Ollama** — [download here](https://ollama.com/download). On Windows it installs to your user folder and starts a background service automatically. Verify with:
+```bash
+ollama --version
+```
+
+**2. Pull a chat model + the embedding model.** Pick the chat model based on your laptop's RAM (the embedding model is the same for everyone):
+
+| Your laptop | Recommended chat model | Disk / resident | Why |
+|---|---|---|---|
+| **8 GB RAM** | `phi3:mini` | ~2.2 GB / ~4 GB | Microsoft Phi-3 Mini (3.8B). Fast on CPU, decent legal reasoning. |
+| **16 GB RAM** | `llama3.1:8b` | ~4.7 GB / ~8 GB | Meta Llama 3.1 8B Instruct. Strong general + legal reasoning, comfortable on a modern laptop. |
+| **32 GB RAM** | `qwen2.5:14b` | ~9 GB / ~14 GB | Qwen 2.5 14B Instruct. Best legal reasoning that still fits on a laptop without a workstation GPU. |
+| **32 GB + discrete GPU** | `qwen2.5:32b` or `mixtral` | ~20 GB / ~26 GB | Big model territory. Needs a strong GPU or patience. |
+
+```bash
+# Pick ONE chat model from the table above. Examples:
+ollama pull phi3:mini         # 8 GB RAM
+ollama pull llama3.1:8b       # 16 GB RAM
+ollama pull qwen2.5:14b       # 32 GB RAM
+
+# Embedding model — same for everyone, required for indexing docs:
+ollama pull nomic-embed-text
+
+# Confirm both are installed:
+ollama list
+```
+
+You can quickly test a model from the terminal before opening Scopic:
+```bash
+ollama run llama3.1:8b "Summarize the IRAC method in two sentences."
+```
+
+**3. Tell Scopic to use it.** Open Scopic → click the gear icon (bottom-left) → **Settings** → **Provider: Ollama** → **Model:** pick the one you pulled. Save. Done — every chat now uses that model, and `nomic-embed-text` handles indexing.
+
+> No env vars are required. Scopic reads the active model from its own settings file (`%APPDATA%/scopic/settings.json`), and the privacy chip at the top of the chat will show `Ollama · <your model>`.
+
+#### Optional — environment variables (power users only)
+
+The default setup needs nothing. If you want to customize **Ollama itself** (e.g. listen on another interface, store models on a different drive), set its env vars **before launching Ollama** and restart it:
+
+```bash
+# Windows (persistent, takes effect after restart):
+setx OLLAMA_HOST   "0.0.0.0:11434"
+setx OLLAMA_MODELS "D:\ollama-models"
+
+# macOS / Linux (temporary, for current shell):
+export OLLAMA_HOST=0.0.0.0:11434
+export OLLAMA_MODELS=$HOME/ollama-models
+```
+
+Then point Scopic at the new address in **Settings → Ollama URL** if you changed the host (e.g. `http://192.168.1.10:11434` for another machine on your LAN). Full reference: [Ollama FAQ](https://github.com/ollama/ollama/blob/main/docs/faq.md).
+
 ---
 
 ## Why Scopic
@@ -237,24 +293,85 @@ Documents (N): • <filename> (Np) — <short summary>  ...
 
 ## Getting started — lawyers
 
-**1. Install Ollama** — [ollama.com/download](https://ollama.com/download). Run the installer; it runs in the background.
+You do this once. After that, Scopic auto-updates and Ollama just keeps running in the background.
 
-**2. Pull a chat model and the embedding model.**
-```
+### Step 1 — Download and install Ollama
+
+Ollama is the engine that runs the AI on your machine. Without it, the local-only mode can't work.
+
+1. Go to **[ollama.com/download](https://ollama.com/download)** and click the download button for your OS (Windows / macOS / Linux).
+2. Run the installer. On Windows it installs to your user directory and registers a background service automatically — no admin prompts, no manual configuration.
+3. After install, Ollama is already running. Confirm by opening a terminal (Windows: search "cmd" → Command Prompt) and running:
+   ```
+   ollama --version
+   ```
+   If it prints a version number, you're good.
+
+By default Ollama listens on `http://localhost:11434`. Scopic targets that URL out of the box — no environment variables needed for the standard setup.
+
+### Step 2 — Pull the AI models
+
+Two models are required: one for **chat**, one for **embeddings** (used to index your documents). In the same terminal:
+
+```bash
+# Chat model — small and fast, runs on any modern laptop.
 ollama pull phi3
+
+# Embedding model — required for indexing documents inside projects.
 ollama pull nomic-embed-text
 ```
 
-Recommended chat models by hardware:
-- No dedicated GPU → `phi3` (~2.2 GB, default)
-- With NVIDIA GPU → `mistral` (~4.1 GB) or `llama3.1:8b` (~4.7 GB)
-- Heavy hardware → `llama3.1:70b-instruct-q4_0` (~40 GB)
+Each command downloads the model to your machine (`phi3` is ~2.2 GB, `nomic-embed-text` is ~270 MB). Pull them once; Ollama caches them locally. Verify they're installed:
 
-**3. Install Scopic** — download the latest `Scopic.Setup.<version>.exe` from the [Releases page](https://github.com/ezazahamad2003/scopic/releases) and run it. A desktop shortcut is created automatically. Future updates install themselves.
+```bash
+ollama list
+```
 
-**4. Launch Scopic.** The privacy chip in the chat header shows your current setup. Green dot = everything local. Type a legal question, drop a contract into `+ Documents`, or pin a document to a project.
+You should see both `phi3` and `nomic-embed-text` in the output.
+
+**Pick a chat model by hardware:**
+
+| Hardware | Recommended model | Pull command |
+|---|---|---|
+| No dedicated GPU | `phi3` (~2.2 GB) | `ollama pull phi3` |
+| NVIDIA GPU, 8–16 GB VRAM | `llama3.1:8b` (~4.7 GB) | `ollama pull llama3.1:8b` |
+| NVIDIA GPU, 24 GB+ VRAM | `llama3.1:70b-instruct-q4_0` (~40 GB) | `ollama pull llama3.1:70b-instruct-q4_0` |
+| Apple Silicon (M1/M2/M3) | `mistral` (~4.1 GB) | `ollama pull mistral` |
+
+You can pull more than one chat model and switch between them in Settings.
+
+### Step 3 — Install Scopic
+
+1. Open the [**Releases page**](https://github.com/ezazahamad2003/scopic/releases).
+2. Download the latest `Scopic.Setup.<version>.exe`.
+3. Run the installer. A desktop shortcut is created automatically. Future updates install themselves on next launch.
 
 > **No Node.js, no npm, no developer tools required.** The installer is self-contained.
+
+### Step 4 — Tell Scopic which model to use
+
+The first time you launch Scopic:
+
+1. Open it from your desktop shortcut.
+2. Check the **privacy chip** at the top of the chat: `Embeddings: local · Chat: Ollama · <model>`. A **green dot** means everything is local.
+3. If the chat model shown isn't the one you want, click the gear icon (bottom-left of the sidebar) → **Settings**.
+4. **Provider** → pick `Ollama (local)`.
+5. **Model** → the dropdown is auto-populated from what `ollama list` reports. Pick `phi3` (or whatever you pulled).
+6. Save. Scopic now uses that model for every chat turn, and `nomic-embed-text` for every document it indexes.
+
+The same Settings panel lets you pick a different embedding model or switch the chat provider to Anthropic / OpenAI / Gemini with your own API key — even then, embeddings stay local.
+
+### Optional — environment variables
+
+The default setup needs nothing. If you want to customize:
+
+- **Scopic side** — open Settings → **Ollama URL** and paste a different address (e.g. `http://192.168.1.10:11434` if Ollama is on another machine on your LAN). Stored under your local user-data folder; no shell env vars to manage.
+- **Ollama side** — set Ollama's own environment variables before launching it, e.g.:
+  ```
+  setx OLLAMA_HOST   0.0.0.0:11434       # listen on all interfaces
+  setx OLLAMA_MODELS D:\ollama-models    # store models on a different drive
+  ```
+  Restart Ollama after changing these. Scopic will pick up whatever Ollama is serving. Full reference: [Ollama FAQ](https://github.com/ollama/ollama/blob/main/docs/faq.md).
 
 ---
 
