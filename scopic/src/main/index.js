@@ -151,9 +151,6 @@ async function checkProviderOnStart() {
     const provider = settings.provider || "ollama";
     const ok = await pingProvider({ provider, settings });
     mainWindow?.webContents.send("provider:status", { provider, connected: ok });
-    if (provider === "ollama") {
-      mainWindow?.webContents.send("ollama:status", { connected: ok });
-    }
   } catch {
     mainWindow?.webContents.send("provider:status", { connected: false });
   }
@@ -173,17 +170,6 @@ ipcMain.handle("provider:listModels", async (_, { provider } = {}) => {
   const settings = settingsStore.get("settings");
   const target = provider || settings.provider || "ollama";
   return listProviderModels({ provider: target, settings });
-});
-
-ipcMain.handle("ollama:check", async () => {
-  const settings = settingsStore.get("settings");
-  return pingProvider({ provider: "ollama", settings });
-});
-
-ipcMain.handle("ollama:tags", async () => {
-  const settings = settingsStore.get("settings");
-  const models = await listProviderModels({ provider: "ollama", settings });
-  return { models: models.map((name) => ({ name })) };
 });
 
 // ────────────────────────────────────────────────────────────────
@@ -297,13 +283,6 @@ ipcMain.on("chat:send", async (event, payload) => {
   } finally {
     activeChatAborts.delete(requestId);
   }
-});
-
-ipcMain.on("ollama:chat", (event, payload) => {
-  ipcMain.emit("chat:send", event, {
-    ...payload,
-    options: { ...(payload?.options || {}), provider: "ollama" },
-  });
 });
 
 ipcMain.on("chat:abort", (_, { requestId } = {}) => {

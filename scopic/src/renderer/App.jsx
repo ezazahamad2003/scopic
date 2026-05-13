@@ -5,7 +5,6 @@ import ProjectsView from "./components/ProjectsView.jsx";
 import WorkflowsView from "./components/WorkflowsView.jsx";
 import TabularReviewView from "./components/TabularReviewView.jsx";
 import SettingsModal from "./components/SettingsModal.jsx";
-import DocumentVaultModal from "./components/DocumentVaultModal.jsx";
 import ProjectModal from "./components/ProjectModal.jsx";
 import WorkflowRunner from "./components/WorkflowRunner.jsx";
 import UpdateBanner from "./components/UpdateBanner.jsx";
@@ -17,7 +16,6 @@ import { saveConversation, generateId } from "./utils/storage.js";
 export default function App() {
   const [activeView, setActiveView] = useState("assistant");
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [vaultOpen, setVaultOpen] = useState(false);
   const [projectModalState, setProjectModalState] = useState({ open: false, project: null });
   const [activePipeline, setActivePipeline] = useState(null);
   const [activeTabularPreset, setActiveTabularPreset] = useState(null);
@@ -135,15 +133,6 @@ export default function App() {
     saveSettings(next);
   };
 
-  const handleVaultSubmit = (message) => {
-    setVaultOpen(false);
-    setActiveView("assistant");
-    setActiveMode("general");
-    const id = createNewConversation();
-    setActiveConversationId(id);
-    setTimeout(() => sendMessage(message), 50);
-  };
-
   const handleNewProject = () => setProjectModalState({ open: true, project: null });
   const handleEditProject = (project) => setProjectModalState({ open: true, project });
 
@@ -240,11 +229,9 @@ export default function App() {
           conversations={conversations}
           projects={projects}
           activeId={activeConversationId}
-          activeProjectId={activeProjectId}
           activeView={activeView}
           connected={connected}
           settings={settings}
-          theme={resolvedTheme}
           onChangeView={setActiveView}
           onSelectConversation={handleSelectConversation}
           onNewConversation={handleNewConversation}
@@ -271,8 +258,6 @@ export default function App() {
             onClearProject={() => setActiveProjectId(null)}
             onOpenProjects={() => setActiveView("projects")}
             onOpenWorkflows={() => setActiveView("workflows")}
-            onRunPipeline={handleRunPipeline}
-            onPickWorkflow={handlePickWorkflow}
             draft={pendingDraft}
             onDraftConsumed={() => setPendingDraft(null)}
           />
@@ -313,13 +298,6 @@ export default function App() {
             recheckConnection();
           }}
           onClose={() => setSettingsOpen(false)}
-        />
-      )}
-
-      {vaultOpen && (
-        <DocumentVaultModal
-          onClose={() => setVaultOpen(false)}
-          onSubmit={handleVaultSubmit}
         />
       )}
 

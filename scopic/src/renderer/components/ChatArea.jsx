@@ -35,8 +35,6 @@ export default function ChatArea({
   settings,
   models,
   onChangeModel,
-  onRunPipeline,
-  onPickWorkflow,
   draft,
   onDraftConsumed,
 }) {

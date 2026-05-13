@@ -193,12 +193,3 @@ body,
   color: var(--accent);
   font-size: 0.9em;
 }
-
-/* Gradient fade for sidebar */
-.sidebar-gradient {
-  background: linear-gradient(180deg, var(--sidebar) 0%, var(--bg) 100%);
-}
-
-[data-theme="dark"] .theme-invert-logo {
-  filter: invert(1);
-}

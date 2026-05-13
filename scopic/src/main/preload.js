@@ -19,23 +19,6 @@ contextBridge.exposeInMainWorld("providers", {
   onStatus: (cb) => sub("provider:status", cb),
 });
 
-// ───── Back-compat for old Ollama surface ─────
-contextBridge.exposeInMainWorld("ollama", {
-  chat: (messages, options, requestId) => {
-    ipcRenderer.send("chat:send", {
-      messages,
-      options: { ...(options || {}), provider: "ollama" },
-      requestId,
-    });
-  },
-  checkConnection: () => ipcRenderer.invoke("ollama:check"),
-  getModels: () => ipcRenderer.invoke("ollama:tags"),
-  onToken: (cb) => sub("chat:token", cb),
-  onDone:  (cb) => sub("chat:done", cb),
-  onError: (cb) => sub("chat:error", cb),
-  onStatus:(cb) => sub("ollama:status", cb),
-});
-
 // ───── Structured store (SQLite-backed) ─────
 contextBridge.exposeInMainWorld("store", {
   getConversations: () => ipcRenderer.invoke("store:getConversations"),
