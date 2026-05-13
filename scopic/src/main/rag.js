@@ -23,14 +23,29 @@ const documentsModule = require("./documents");
 
 const DEFAULT_EMBED_MODEL = "nomic-embed-text";
 
+// Avoid Node's IPv6-first resolution of `localhost`. Ollama listens on
+// IPv4 by default, so resolving to ::1 produces "fetch failed".
+function normalizeUrl(url) {
+  if (!url) return "http://127.0.0.1:11434";
+  return url.replace(/\/\/localhost(?=[:\/]|$)/i, "//127.0.0.1");
+}
+
 async function embedText(text, { ollamaUrl, model = DEFAULT_EMBED_MODEL, signal } = {}) {
-  if (!ollamaUrl) throw new Error("Ollama URL required for embeddings");
-  const response = await fetch(`${ollamaUrl}/api/embeddings`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ model, prompt: text }),
-    signal,
-  });
+  const target = `${normalizeUrl(ollamaUrl)}/api/embeddings`;
+  let response;
+  try {
+    response = await fetch(target, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model, prompt: text }),
+      signal,
+    });
+  } catch (err) {
+    const code = err?.cause?.code || err?.cause?.errno;
+    const detail = err?.cause?.message || err?.message || "unknown";
+    const hint = code === "ECONNREFUSED" ? " Is Ollama running? Start it with `ollama serve`." : "";
+    throw new Error(`Cannot reach Ollama (embeddings) at ${target}. ${detail}.${hint}`);
+  }
   if (!response.ok) {
     const err = await response.text().catch(() => response.statusText);
     throw new Error(`Embedding failed: ${err}`);

@@ -35,8 +35,33 @@ function supportsTemperature(provider, model) {
   return true;
 }
 
+// Normalize "localhost" → 127.0.0.1 so Node's IPv6-first resolver doesn't
+// route us to ::1 when Ollama is bound to IPv4 only (the default).
+function ollamaUrl(url) {
+  return (url || "http://127.0.0.1:11434").replace(/\/\/localhost(?=[:\/]|$)/i, "//127.0.0.1");
+}
+
+// Wrap fetch failures so the renderer sees an actionable message
+// instead of the bare "fetch failed" undici returns.
+async function ollamaFetch(target, init, label) {
+  try {
+    return await fetch(target, init);
+  } catch (err) {
+    const cause = err?.cause;
+    const code = cause?.code || cause?.errno || cause?.name;
+    const detail = cause?.message || err?.message || "unknown";
+    const hint = code === "ECONNREFUSED"
+      ? "Is Ollama running? Start it with `ollama serve`."
+      : code === "ENOTFOUND" || code === "EAI_AGAIN"
+      ? "DNS lookup failed. Check the Ollama URL in Settings."
+      : "";
+    throw new Error(`Cannot reach Ollama (${label}) at ${target}. ${detail}. ${hint}`.trim());
+  }
+}
+
 async function chatOllama({ url, model, temperature, messages, onToken, signal }) {
-  const response = await fetch(`${url}/api/chat`, {
+  const target = `${ollamaUrl(url)}/api/chat`;
+  const response = await ollamaFetch(target, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -46,11 +71,15 @@ async function chatOllama({ url, model, temperature, messages, onToken, signal }
       options: { temperature },
     }),
     signal,
-  });
+  }, "chat");
 
   if (!response.ok) {
     const errText = await response.text().catch(() => response.statusText);
-    throw new Error(errText || `Ollama HTTP ${response.status}`);
+    // Ollama returns 404 with `{"error":"model 'x' not found"}` — bubble it up clean.
+    let parsed = null;
+    try { parsed = JSON.parse(errText); } catch {}
+    const msg = parsed?.error || errText || `Ollama HTTP ${response.status}`;
+    throw new Error(msg);
   }
 
   const decoder = new TextDecoder("utf-8");
@@ -248,7 +277,7 @@ async function dispatchChat({ provider, settings, model, temperature, messages, 
 async function listProviderModels({ provider, settings }) {
   if (provider === "ollama") {
     try {
-      const response = await fetch(`${settings.ollamaUrl}/api/tags`, {
+      const response = await fetch(`${ollamaUrl(settings.ollamaUrl)}/api/tags`, {
         signal: AbortSignal.timeout(5000),
       });
       if (!response.ok) return [];
@@ -314,7 +343,7 @@ async function listProviderModels({ provider, settings }) {
 async function pingProvider({ provider, settings }) {
   if (provider === "ollama") {
     try {
-      const response = await fetch(`${settings.ollamaUrl}/api/tags`, {
+      const response = await fetch(`${ollamaUrl(settings.ollamaUrl)}/api/tags`, {
         signal: AbortSignal.timeout(3000),
       });
       return response.ok;
