@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { renderMarkdown } from "../utils/markdown.js";
 import { DEFAULT_SETTINGS } from "../utils/constants.js";
+import { getMikeColumnPreset } from "../utils/mikeAdapters.js";
 
 const TABULAR_SYSTEM_PROMPT = `You are Scopic's Tabular Review assistant. The user has attached a document or dataset — it may be a spreadsheet (CSV/TSV/XLSX), a Word document (DOCX), a PDF, or plain text — and is asking questions about it.
 
@@ -38,18 +39,29 @@ function extOf(name) {
 // Dedicated page for spreadsheet/tabular data analysis. Drop a file,
 // see a preview, ask the model questions about it. Uses the unified
 // chat IPC for streaming with a data-analysis system prompt.
-export default function TabularReviewView({ settings }) {
+export default function TabularReviewView({ settings, preset }) {
   const [file, setFile] = useState(null);  // { name, sizeBytes, text }
   const [parsing, setParsing] = useState(false);
   const [error, setError] = useState(null);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [columns, setColumns] = useState([]);
+  const [cells, setCells] = useState({});
+  const [tableRunning, setTableRunning] = useState(false);
+  const [newColumnName, setNewColumnName] = useState("");
 
   const requestIdRef = useRef(null);
+  const tableRequestsRef = useRef(new Map());
   const fileInputRef = useRef(null);
   const dropRef = useRef(null);
   const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    if (!preset?.columns?.length) return;
+    setColumns(preset.columns);
+    setCells({});
+  }, [preset]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -59,6 +71,18 @@ export default function TabularReviewView({ settings }) {
   useEffect(() => {
     if (!window.chat) return;
     const offToken = window.chat.onToken(({ requestId, token }) => {
+      const tableReq = tableRequestsRef.current.get(requestId);
+      if (tableReq) {
+        setCells((prev) => ({
+          ...prev,
+          [tableReq.columnIndex]: {
+            ...(prev[tableReq.columnIndex] || {}),
+            status: "generating",
+            content: `${prev[tableReq.columnIndex]?.content || ""}${token}`,
+          },
+        }));
+        return;
+      }
       if (requestId !== requestIdRef.current) return;
       setMessages((prev) => {
         const updated = [...prev];
@@ -70,11 +94,37 @@ export default function TabularReviewView({ settings }) {
       });
     });
     const offDone = window.chat.onDone(({ requestId }) => {
+      const tableReq = tableRequestsRef.current.get(requestId);
+      if (tableReq) {
+        tableRequestsRef.current.delete(requestId);
+        setCells((prev) => ({
+          ...prev,
+          [tableReq.columnIndex]: {
+            ...(prev[tableReq.columnIndex] || {}),
+            status: "done",
+          },
+        }));
+        if (tableRequestsRef.current.size === 0) setTableRunning(false);
+        return;
+      }
       if (requestId !== requestIdRef.current) return;
       setIsStreaming(false);
       requestIdRef.current = null;
     });
     const offError = window.chat.onError(({ requestId, error: errMsg }) => {
+      const tableReq = tableRequestsRef.current.get(requestId);
+      if (tableReq) {
+        tableRequestsRef.current.delete(requestId);
+        setCells((prev) => ({
+          ...prev,
+          [tableReq.columnIndex]: {
+            status: "error",
+            content: errMsg || "Column extraction failed.",
+          },
+        }));
+        if (tableRequestsRef.current.size === 0) setTableRunning(false);
+        return;
+      }
       if (requestId !== requestIdRef.current) return;
       setMessages((prev) => {
         const updated = [...prev];
@@ -110,6 +160,7 @@ export default function TabularReviewView({ settings }) {
         kind: TABULAR_EXTENSIONS.has(ext) ? "tabular" : "document",
       });
       setMessages([]);
+      setCells({});
     } catch (err) {
       setError(err?.message || "Failed to parse file");
     } finally {
@@ -165,8 +216,133 @@ export default function TabularReviewView({ settings }) {
 
   const handleStop = () => {
     if (requestIdRef.current && window.chat) window.chat.abort(requestIdRef.current);
+    for (const requestId of tableRequestsRef.current.keys()) {
+      window.chat?.abort(requestId);
+    }
+    tableRequestsRef.current.clear();
     requestIdRef.current = null;
     setIsStreaming(false);
+    setTableRunning(false);
+  };
+
+  const addColumn = () => {
+    const name = newColumnName.trim();
+    if (!name) return;
+    const presetConfig = getMikeColumnPreset(name);
+    setColumns((prev) => [
+      ...prev,
+      {
+        index: prev.length,
+        name,
+        format: presetConfig?.format || "text",
+        prompt: presetConfig?.prompt || "",
+        tags: presetConfig?.tags || [],
+      },
+    ]);
+    setNewColumnName("");
+  };
+
+  const removeColumn = (index) => {
+    setColumns((prev) =>
+      prev
+        .filter((column) => column.index !== index)
+        .map((column, nextIndex) => ({ ...column, index: nextIndex }))
+    );
+    setCells((prev) => {
+      const next = {};
+      Object.entries(prev).forEach(([key, value]) => {
+        const n = Number(key);
+        if (n < index) next[n] = value;
+        if (n > index) next[n - 1] = value;
+      });
+      return next;
+    });
+  };
+
+  const runColumnExtraction = (column) => {
+    if (!file || !window.chat) return;
+    const provider = settings?.provider || DEFAULT_SETTINGS.provider;
+    const temperature = 0.1;
+    const model =
+      provider === "ollama"
+        ? settings?.model || DEFAULT_SETTINGS.model
+        : settings?.cloudModels?.[provider] || DEFAULT_SETTINGS.cloudModels[provider];
+
+    const textLimit = 50000;
+    const documentText = `${file.text.slice(0, textLimit)}${file.text.length > textLimit ? "\n[truncated]" : ""}`;
+    const requestId = `tabcell-${Date.now()}-${column.index}-${Math.random().toString(36).slice(2, 7)}`;
+    tableRequestsRef.current.set(requestId, { columnIndex: column.index });
+    setCells((prev) => ({
+      ...prev,
+      [column.index]: { status: "generating", content: "" },
+    }));
+    setTableRunning(true);
+
+    window.chat.send(
+      [
+        {
+          role: "system",
+          content:
+            "You are Scopic's tabular legal review extractor. Extract exactly one field from one document. " +
+            "Ground the answer in the document text. Be concise. If the answer is absent, return \"Not addressed\". " +
+            "Include clause, page, section, row, or short quote references where available.",
+        },
+        {
+          role: "user",
+          content:
+            `Document name: ${file.name}\n\n` +
+            `Column: ${column.name}\n` +
+            `Expected format: ${column.format || "text"}\n` +
+            `Extraction instruction: ${column.prompt || `Extract ${column.name}.`}\n\n` +
+            `Document text:\n\`\`\`\n${documentText}\n\`\`\``,
+        },
+      ],
+      { provider, model, temperature, rawMessages: true, mode: "tabular_cell" },
+      requestId
+    );
+  };
+
+  const runPresetTable = () => {
+    if (!file || !columns.length || tableRunning) return;
+    setCells({});
+    columns.forEach(runColumnExtraction);
+  };
+
+  const exportTable = async () => {
+    if (!file || !columns.length) return;
+    const ExcelModule = await import("exceljs");
+    const ExcelJS = ExcelModule.default || ExcelModule;
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Review");
+    worksheet.columns = [
+      { header: "Document", width: 36 },
+      ...columns.map((column) => ({ header: column.name, width: 42 })),
+    ];
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFF3F4F6" },
+    };
+    const row = worksheet.addRow([
+      file.name,
+      ...columns.map((column) => (cells[column.index]?.content || "").trim()),
+    ]);
+    row.alignment = { vertical: "top", wrapText: true };
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    const cleanTitle = (preset?.title || "Scopic Tabular Review").replace(/[\\/:*?"<>|]/g, "").slice(0, 80);
+    anchor.href = url;
+    anchor.download = `${cleanTitle || "Scopic Tabular Review"}.xlsx`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
   };
 
   const previewLines = file ? file.text.split("\n").slice(0, 80) : [];
@@ -177,10 +353,12 @@ export default function TabularReviewView({ settings }) {
     <main className="flex flex-col flex-1 overflow-hidden" style={{ background: "#FBFAF7" }}>
       <div className="px-8 py-6 border-b" style={{ borderColor: "#F8FAFC" }}>
         <h1 className="text-xl font-semibold" style={{ fontFamily: "DM Serif Display, serif", color: "#1F2937" }}>
-          Tabular Review
+          {preset?.title || "Tabular Review"}
         </h1>
 <p className="text-xs mt-0.5" style={{ color: "#64748B" }}>
-          Drop a Word doc, PDF, spreadsheet, or text file. Ask questions about clauses, dates, parties, totals, anomalies.
+          {preset?.columns?.length
+            ? `${preset.practice || "Legal"} review from Mike, adapted for Scopic local files. ${preset.columns.length} extraction columns loaded.`
+            : "Drop a Word doc, PDF, spreadsheet, or text file. Ask questions about clauses, dates, parties, totals, anomalies."}
         </p>
       </div>
 
@@ -227,7 +405,7 @@ export default function TabularReviewView({ settings }) {
                 </span>
               </div>
               <button
-                onClick={() => { setFile(null); setMessages([]); setError(null); }}
+                onClick={() => { setFile(null); setMessages([]); setCells({}); setError(null); }}
                 className="text-xs px-2 py-1 rounded transition-colors"
                 style={{ color: "#64748B", border: "1px solid #D8DEE8" }}
               >
@@ -249,6 +427,127 @@ export default function TabularReviewView({ settings }) {
                 {previewLines.join("\n")}
                 {totalLines > 80 && `\n…${totalLines - 80} more lines (${isModelTextTruncated ? "first 30,000 characters sent to model" : "full text sent to model"})`}
               </pre>
+            </div>
+
+            {/* Mike-style column review */}
+            {columns.length > 0 && (
+              <div
+                className="rounded-lg overflow-hidden mb-3"
+                style={{ background: "#FFFFFF", border: "1px solid #D8DEE8" }}
+              >
+                <div
+                  className="flex items-center justify-between gap-3 px-3 py-2 border-b"
+                  style={{ borderColor: "#E5E7EB" }}
+                >
+                  <div className="min-w-0">
+                    <div className="text-xs font-semibold" style={{ color: "#1F2937" }}>
+                      Review table
+                    </div>
+                    <div className="text-[11px] truncate" style={{ color: "#64748B" }}>
+                      {columns.length} column{columns.length === 1 ? "" : "s"} loaded from {preset?.source || "Scopic"}.
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={runPresetTable}
+                      disabled={!file || tableRunning}
+                      className="px-3 py-1.5 rounded text-xs font-medium disabled:opacity-50"
+                      style={{ background: "#315A98", color: "#FFFFFF" }}
+                    >
+                      {tableRunning ? "Running" : "Run review"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={exportTable}
+                      disabled={Object.keys(cells).length === 0}
+                      className="px-3 py-1.5 rounded text-xs font-medium disabled:opacity-50"
+                      style={{ border: "1px solid #D8DEE8", color: "#334155" }}
+                    >
+                      Export XLSX
+                    </button>
+                  </div>
+                </div>
+                <div className="overflow-auto" style={{ maxHeight: "32vh" }}>
+                  <table className="w-full border-collapse text-left text-xs">
+                    <thead>
+                      <tr style={{ background: "#F8FAFC", color: "#475569" }}>
+                        <th className="sticky left-0 z-10 min-w-44 px-3 py-2 font-medium" style={{ background: "#F8FAFC" }}>
+                          Document
+                        </th>
+                        {columns.map((column) => (
+                          <th key={column.index} className="min-w-64 px-3 py-2 font-medium">
+                            <div className="flex items-center justify-between gap-2">
+                              <span>{column.name}</span>
+                              <button
+                                type="button"
+                                onClick={() => removeColumn(column.index)}
+                                className="opacity-50 hover:opacity-100"
+                                title={`Remove ${column.name}`}
+                              >
+                                x
+                              </button>
+                            </div>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr style={{ borderTop: "1px solid #E5E7EB" }}>
+                        <td
+                          className="sticky left-0 z-10 px-3 py-3 align-top font-medium"
+                          style={{ background: "#FFFFFF", color: "#1F2937" }}
+                        >
+                          {file.name}
+                        </td>
+                        {columns.map((column) => {
+                          const cell = cells[column.index];
+                          return (
+                            <td
+                              key={column.index}
+                              className="px-3 py-3 align-top leading-relaxed"
+                              style={{ borderLeft: "1px solid #EEF2F7", color: cell?.status === "error" ? "#DC2626" : "#334155" }}
+                            >
+                              {cell?.content ? (
+                                <div dangerouslySetInnerHTML={{ __html: renderMarkdown(cell.content) }} />
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => runColumnExtraction(column)}
+                                  disabled={tableRunning}
+                                  className="text-left text-xs disabled:opacity-50"
+                                  style={{ color: "#315A98" }}
+                                >
+                                  Extract
+                                </button>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center gap-2 mb-3">
+              <input
+                value={newColumnName}
+                onChange={(e) => setNewColumnName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") addColumn(); }}
+                className="flex-1 px-3 py-2 rounded-lg text-xs outline-none"
+                style={{ background: "#FFFFFF", border: "1px solid #D8DEE8", color: "#1F2937" }}
+                placeholder="Add a Mike-style extraction column, e.g. Governing Law"
+              />
+              <button
+                type="button"
+                onClick={addColumn}
+                className="px-3 py-2 rounded-lg text-xs font-medium"
+                style={{ border: "1px solid #D8DEE8", color: "#334155" }}
+              >
+                Add column
+              </button>
             </div>
 
             {/* Chat */}

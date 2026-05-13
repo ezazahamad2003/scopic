@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from "react";
 import { WORKFLOWS, WORKFLOW_PIPELINES } from "../utils/constants.js";
+import { MIKE_PRACTICES, mikeAssistantWorkflows, mikeTabularWorkflows } from "../utils/mikeAdapters.js";
 
-const TYPE_OPTIONS = ["All types", "Assistant", "Pipeline"];
+const TYPE_OPTIONS = ["All types", "Assistant", "Pipeline", "Tabular"];
 const PRACTICE_OPTIONS = [
   "All practices",
   "Corporate",
@@ -11,6 +12,16 @@ const PRACTICE_OPTIONS = [
   "Private Equity",
   "Regulatory",
   "Startup",
+  ...MIKE_PRACTICES.filter(
+    (practice) =>
+      ![
+        "Corporate",
+        "Finance",
+        "General Transactions",
+        "Litigation",
+        "Private Equity",
+      ].includes(practice)
+  ),
 ];
 
 const WORKFLOW_META = {
@@ -30,6 +41,7 @@ const WORKFLOW_META = {
 };
 
 function typeColor(type) {
+  if (type === "Tabular") return "#0F766E";
   return type === "Pipeline" ? "#7C3AED" : "#006BFF";
 }
 
@@ -54,10 +66,32 @@ function workflowRows() {
     item: pipeline,
   }));
 
-  return [...assistantRows, ...pipelineRows].sort((a, b) => a.name.localeCompare(b.name));
+  const mikeAssistantRows = mikeAssistantWorkflows().map((workflow) => ({
+    id: workflow.id,
+    name: workflow.title,
+    description: workflow.blurb,
+    type: "Assistant",
+    practice: workflow.practice,
+    source: "Mike",
+    item: workflow,
+  }));
+
+  const mikeTabularRows = mikeTabularWorkflows().map((workflow) => ({
+    id: workflow.id,
+    name: workflow.title,
+    description: workflow.blurb,
+    type: "Tabular",
+    practice: workflow.practice,
+    source: "Mike",
+    item: workflow,
+  }));
+
+  return [...assistantRows, ...pipelineRows, ...mikeAssistantRows, ...mikeTabularRows].sort((a, b) =>
+    a.name.localeCompare(b.name)
+  );
 }
 
-export default function WorkflowsView({ onPickWorkflow, onRunPipeline }) {
+export default function WorkflowsView({ onPickWorkflow, onRunPipeline, onOpenTabularPreset }) {
   const [activeTab, setActiveTab] = useState("All Workflows");
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("All types");
@@ -79,6 +113,7 @@ export default function WorkflowsView({ onPickWorkflow, onRunPipeline }) {
 
   const handleRun = (row) => {
     if (row.type === "Pipeline") onRunPipeline(row.item);
+    else if (row.type === "Tabular") onOpenTabularPreset(row.item);
     else onPickWorkflow(row.item);
   };
 

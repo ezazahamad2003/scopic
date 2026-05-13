@@ -20,6 +20,7 @@ export default function App() {
   const [vaultOpen, setVaultOpen] = useState(false);
   const [projectModalState, setProjectModalState] = useState({ open: false, project: null });
   const [activePipeline, setActivePipeline] = useState(null);
+  const [activeTabularPreset, setActiveTabularPreset] = useState(null);
   const [activeConversationId, setActiveConversationId] = useState(null);
   const [activeProjectId, setActiveProjectId] = useState(null);
   const [activeMode, setActiveMode] = useState("general");
@@ -167,6 +168,10 @@ export default function App() {
   };
 
   const handleRunPipeline = (pipeline) => setActivePipeline(pipeline);
+  const handleOpenTabularPreset = (preset) => {
+    setActiveTabularPreset(preset);
+    setActiveView("tabular");
+  };
 
   const handleSavePipelineAsConversation = async ({ title, messages }) => {
     const id = generateId();
@@ -287,11 +292,12 @@ export default function App() {
           <WorkflowsView
             onPickWorkflow={handlePickWorkflow}
             onRunPipeline={handleRunPipeline}
+            onOpenTabularPreset={handleOpenTabularPreset}
           />
         )}
 
         {activeView === "tabular" && (
-          <TabularReviewView settings={settings} />
+          <TabularReviewView settings={settings} preset={activeTabularPreset} />
         )}
       </div>
 
